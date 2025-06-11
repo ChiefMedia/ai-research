@@ -1,0 +1,599 @@
+You are analyzing TV campaign attribution data for media buyers and account managers. 
+The campaign has run 846 spots with $348,065.00 in spend over the last 4 weeks.
+
+CRITICAL CONTEXT:
+1. Target demo impressions are a SUBSET of all demo impressions - they should never be compared as related metrics
+2. Overnight (ON) daypart is cheap but does not scale well - be cautious about recommending budget shifts to ON
+3. Statistical significance requires at least 5 spots - recommendations based on fewer spots are unreliable
+4. Focus on specific, actionable insights rather than generic marketing advice
+
+IMPORTANT ANALYSIS GUIDELINES:
+- DO NOT mention obvious correlations like "more spend = more responses" or "spend correlates with visits"
+- FOCUS on efficiency metrics: cost per order, cost per lead, cost per visit, ROI, CPM efficiency
+- IDENTIFY performance variations: which segments deliver better/worse cost efficiency and why
+- LOOK FOR anomalies: segments where efficiency metrics deviate significantly from average
+- CONSIDER fatigue indicators: if sequential time periods show declining efficiency at similar spend levels
+- PRIORITIZE insights about which stations/dayparts/days deliver the best cost efficiency
+
+SUMMARY STATISTICS:
+{
+  "visits_per_spot": {
+    "mean": 19.79,
+    "median": 14.5,
+    "std_dev": 15.84,
+    "min": 0.0,
+    "max": 63.0,
+    "sample_size": 142
+  },
+  "leads_per_spot": {
+    "mean": 8.62,
+    "median": 5.66,
+    "std_dev": 8.0,
+    "min": 0.0,
+    "max": 42.0,
+    "sample_size": 142
+  },
+  "orders_per_spot": {
+    "mean": 1.63,
+    "median": 1.2,
+    "std_dev": 1.5,
+    "min": 0.0,
+    "max": 6.5,
+    "sample_size": 142
+  },
+  "revenue_per_spot": {
+    "mean": 78.88,
+    "median": 53.4,
+    "std_dev": 76.0,
+    "min": 0.0,
+    "max": 333.63,
+    "sample_size": 142
+  },
+  "cost_per_visit": {
+    "mean": 51.27,
+    "median": 25.0,
+    "std_dev": 115.08,
+    "min": 0.0,
+    "max": 900.0,
+    "sample_size": 139
+  },
+  "cost_per_lead": {
+    "mean": 103.34,
+    "median": 63.49,
+    "std_dev": 227.72,
+    "min": 0.0,
+    "max": 2400.0,
+    "sample_size": 131
+  },
+  "cost_per_order": {
+    "mean": 372.73,
+    "median": 300.0,
+    "std_dev": 292.01,
+    "min": 0.0,
+    "max": 1900.0,
+    "sample_size": 123
+  },
+  "roi": {
+    "mean": -0.81,
+    "median": -0.86,
+    "std_dev": 0.18,
+    "min": -1.0,
+    "max": -0.07,
+    "sample_size": 140
+  },
+  "cpm_target_demo": {
+    "mean": 37.34,
+    "median": 23.98,
+    "std_dev": 47.7,
+    "min": 0.0,
+    "max": 366.67,
+    "sample_size": 146
+  },
+  "cpm_all_demo": {
+    "mean": 4.43,
+    "median": 3.29,
+    "std_dev": 3.84,
+    "min": 0.0,
+    "max": 25.0,
+    "sample_size": 146
+  }
+}
+
+PERFORMANCE BY DIMENSION:
+{
+  "station": [
+    {
+      "value": "LIFETIME MOVIE NETWORK",
+      "spot_count": 142,
+      "total_spend": 63700.0,
+      "roi": 0.43,
+      "cost_per_order": 111.95,
+      "orders_per_spot": 4.01,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 149.61,
+        "upper": 243.64
+      }
+    },
+    {
+      "value": "TLC",
+      "spot_count": 32,
+      "total_spend": 19575.0,
+      "roi": 0.27,
+      "cost_per_order": 179.59,
+      "orders_per_spot": 3.41,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 136.14,
+        "upper": 197.53
+      }
+    },
+    {
+      "value": "LIFETIME TELEVISION",
+      "spot_count": 108,
+      "total_spend": 63400.0,
+      "roi": 0.21,
+      "cost_per_order": 210.63,
+      "orders_per_spot": 2.79,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 62.72,
+        "upper": 120.38
+      }
+    },
+    {
+      "value": "TBS NETWORK",
+      "spot_count": 102,
+      "total_spend": 33600.0,
+      "roi": 0.2,
+      "cost_per_order": 252.63,
+      "orders_per_spot": 1.3,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 51.16,
+        "upper": 108.51
+      }
+    },
+    {
+      "value": "FOOD NETWORK",
+      "spot_count": 24,
+      "total_spend": 4440.0,
+      "roi": 0.18,
+      "cost_per_order": 261.18,
+      "orders_per_spot": 0.71,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 9.11,
+        "upper": 49.26
+      }
+    },
+    {
+      "value": "BRAVO",
+      "spot_count": 32,
+      "total_spend": 7200.0,
+      "roi": 0.16,
+      "cost_per_order": 327.27,
+      "orders_per_spot": 0.69,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 9.88,
+        "upper": 49.11
+      }
+    },
+    {
+      "value": "TURNER NETWORK TELEVISION",
+      "spot_count": 32,
+      "total_spend": 4800.0,
+      "roi": 0.15,
+      "cost_per_order": 342.86,
+      "orders_per_spot": 0.44,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 2.67,
+        "upper": 43.46
+      }
+    },
+    {
+      "value": "WETV",
+      "spot_count": 127,
+      "total_spend": 52525.0,
+      "roi": 0.15,
+      "cost_per_order": 324.23,
+      "orders_per_spot": 1.28,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 48.12,
+        "upper": 118.4
+      }
+    },
+    {
+      "value": "GSN",
+      "spot_count": 57,
+      "total_spend": 25475.0,
+      "roi": 0.14,
+      "cost_per_order": 348.97,
+      "orders_per_spot": 1.28,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 41.65,
+        "upper": 111.28
+      }
+    },
+    {
+      "value": "AMC",
+      "spot_count": 43,
+      "total_spend": 15700.0,
+      "roi": 0.13,
+      "cost_per_order": 402.56,
+      "orders_per_spot": 0.91,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 27.39,
+        "upper": 88.25
+      }
+    },
+    {
+      "value": "INVESTIGATION DISCOVERY",
+      "spot_count": 38,
+      "total_spend": 10400.0,
+      "roi": 0.12,
+      "cost_per_order": 385.19,
+      "orders_per_spot": 0.71,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 10.16,
+        "upper": 48.04
+      }
+    },
+    {
+      "value": "USA NETWORK",
+      "spot_count": 45,
+      "total_spend": 20700.0,
+      "roi": 0.1,
+      "cost_per_order": 504.88,
+      "orders_per_spot": 0.91,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 21.54,
+        "upper": 145.29
+      }
+    },
+    {
+      "value": "HALLMARK CHANNEL",
+      "spot_count": 54,
+      "total_spend": 17050.0,
+      "roi": 0.09,
+      "cost_per_order": 516.67,
+      "orders_per_spot": 0.61,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 10.63,
+        "upper": 37.46
+      }
+    },
+    {
+      "value": "A&E NETWORK",
+      "spot_count": 10,
+      "total_spend": 9500.0,
+      "roi": 0.07,
+      "cost_per_order": 593.75,
+      "orders_per_spot": 1.6,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 57.24,
+        "upper": 131.76
+      }
+    }
+  ],
+  "daypart": [
+    {
+      "value": "WK",
+      "spot_count": 75,
+      "total_spend": 35250.0,
+      "roi": 0.4,
+      "cost_per_order": 121.55,
+      "orders_per_spot": 3.87,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 25.01,
+        "upper": 213.91
+      }
+    },
+    {
+      "value": "EF",
+      "spot_count": 79,
+      "total_spend": 42250.0,
+      "roi": 0.3,
+      "cost_per_order": 157.65,
+      "orders_per_spot": 3.39,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 91.39,
+        "upper": 192.25
+      }
+    },
+    {
+      "value": "EM",
+      "spot_count": 32,
+      "total_spend": 19575.0,
+      "roi": 0.27,
+      "cost_per_order": 179.59,
+      "orders_per_spot": 3.41,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 136.14,
+        "upper": 197.53
+      }
+    },
+    {
+      "value": "ON",
+      "spot_count": 418,
+      "total_spend": 67940.0,
+      "roi": 0.2,
+      "cost_per_order": 252.57,
+      "orders_per_spot": 0.64,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 23.72,
+        "upper": 36.01
+      }
+    },
+    {
+      "value": "DA",
+      "spot_count": 119,
+      "total_spend": 82700.0,
+      "roi": 0.18,
+      "cost_per_order": 236.96,
+      "orders_per_spot": 2.93,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 94.44,
+        "upper": 169.87
+      }
+    },
+    {
+      "value": "PR",
+      "spot_count": 95,
+      "total_spend": 89150.0,
+      "roi": 0.14,
+      "cost_per_order": 350.98,
+      "orders_per_spot": 2.67,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 101.83,
+        "upper": 156.73
+      }
+    },
+    {
+      "value": "LF",
+      "spot_count": 28,
+      "total_spend": 11200.0,
+      "roi": 0.05,
+      "cost_per_order": 658.82,
+      "orders_per_spot": 0.61,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 6.42,
+        "upper": 33.07
+      }
+    }
+  ],
+  "weekday": [
+    {
+      "value": "Saturday",
+      "spot_count": 137,
+      "total_spend": 48720.0,
+      "roi": 0.26,
+      "cost_per_order": 196.45,
+      "orders_per_spot": 1.81,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 29.24,
+        "upper": 96.65
+      }
+    },
+    {
+      "value": "Sunday",
+      "spot_count": 101,
+      "total_spend": 36150.0,
+      "roi": 0.23,
+      "cost_per_order": 197.54,
+      "orders_per_spot": 1.81,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 31.21,
+        "upper": 79.34
+      }
+    },
+    {
+      "value": "Wednesday",
+      "spot_count": 121,
+      "total_spend": 56170.0,
+      "roi": 0.22,
+      "cost_per_order": 222.02,
+      "orders_per_spot": 2.09,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 68.58,
+        "upper": 138.86
+      }
+    },
+    {
+      "value": "Friday",
+      "spot_count": 142,
+      "total_spend": 57945.0,
+      "roi": 0.21,
+      "cost_per_order": 223.73,
+      "orders_per_spot": 1.82,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 48.12,
+        "upper": 103.48
+      }
+    },
+    {
+      "value": "Thursday",
+      "spot_count": 138,
+      "total_spend": 62000.0,
+      "roi": 0.21,
+      "cost_per_order": 230.48,
+      "orders_per_spot": 1.95,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 54.71,
+        "upper": 106.52
+      }
+    },
+    {
+      "value": "Tuesday",
+      "spot_count": 117,
+      "total_spend": 51880.0,
+      "roi": 0.19,
+      "cost_per_order": 224.59,
+      "orders_per_spot": 1.97,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 44.1,
+        "upper": 113.69
+      }
+    },
+    {
+      "value": "Monday",
+      "spot_count": 90,
+      "total_spend": 35200.0,
+      "roi": 0.16,
+      "cost_per_order": 311.5,
+      "orders_per_spot": 1.26,
+      "cpm_target_demo": null,
+      "statistically_significant": true,
+      "revenue_per_spot_ci": {
+        "lower": 40.48,
+        "upper": 131.87
+      }
+    }
+  ]
+}
+
+CORRELATION ANALYSIS:
+{
+  "cost_per_order": {
+    "cost_per_lead": 0.649,
+    "cost_per_visit": 0.28,
+    "roi": -0.679,
+    "cpm_target_demo": 0.026,
+    "lead_conversion_rate": -0.264,
+    "order_conversion_rate": NaN
+  },
+  "cost_per_lead": {
+    "cost_per_order": 0.649,
+    "cost_per_visit": 0.379,
+    "roi": -0.286,
+    "cpm_target_demo": -0.02,
+    "lead_conversion_rate": -0.217,
+    "order_conversion_rate": 0.114
+  },
+  "cost_per_visit": {
+    "cost_per_order": 0.28,
+    "cost_per_lead": 0.379,
+    "roi": -0.283,
+    "cpm_target_demo": -0.034,
+    "lead_conversion_rate": -0.029,
+    "order_conversion_rate": NaN
+  },
+  "roi": {
+    "cost_per_order": -0.679,
+    "cost_per_lead": -0.286,
+    "cost_per_visit": -0.283,
+    "cpm_target_demo": -0.04,
+    "lead_conversion_rate": NaN,
+    "order_conversion_rate": NaN
+  },
+  "cpm_target_demo": {
+    "cost_per_order": 0.026,
+    "cost_per_lead": -0.02,
+    "cost_per_visit": -0.034,
+    "roi": -0.04,
+    "lead_conversion_rate": NaN,
+    "order_conversion_rate": NaN
+  },
+  "lead_conversion_rate": {
+    "cost_per_order": -0.264,
+    "cost_per_lead": -0.217,
+    "cost_per_visit": -0.029,
+    "roi": NaN,
+    "cpm_target_demo": NaN,
+    "order_conversion_rate": NaN
+  },
+  "order_conversion_rate": {
+    "cost_per_order": NaN,
+    "cost_per_lead": 0.114,
+    "cost_per_visit": NaN,
+    "roi": NaN,
+    "cpm_target_demo": NaN,
+    "lead_conversion_rate": NaN
+  }
+}
+
+STATISTICAL FINDINGS:
+[]
+
+Based on this data, provide a JSON response with the following structure:
+{
+    "insights": [
+        {
+            "finding": "Clear, specific observation about cost efficiency or performance",
+            "evidence": "Data points supporting this finding (focus on cost-per metrics, ROI)",
+            "confidence": "high/medium/low",
+            "impact": "Quantified business impact in terms of efficiency improvement"
+        }
+    ],
+    "recommendations": [
+        {
+            "action": "Specific action to improve cost efficiency",
+            "rationale": "Data-driven justification based on efficiency metrics",
+            "expected_impact": "Quantified efficiency improvement (e.g., 'reduce cost per order by $X')",
+            "priority": "high/medium/low",
+            "sample_size_caveat": "Note if based on limited data"
+        }
+    ]
+}
+
+Focus on:
+1. Cost efficiency variations across stations, dayparts, and weekdays
+2. ROI optimization opportunities based on performance differences
+3. CPM efficiency vs. response rate trade-offs
+4. Segments with unusually high/low cost per acquisition
+5. Performance consistency - which segments deliver reliable efficiency
+
+AVOID:
+- Stating obvious relationships (spend vs. volume metrics)
+- Generic marketing advice
+- Recommendations based purely on volume rather than efficiency
+- Absolute performance metrics without efficiency context
