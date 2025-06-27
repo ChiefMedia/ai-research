@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-Media Buy AI Insights - Main Entry Point
-Complete executive demo integrating database, KPI calculation, AI insights, and reporting
-Enhanced version with automatic CSV export for Power BI integration
+Enhanced Media Buy AI Insights - Main Entry Point
+Complete executive demo with comprehensive granular insights for Power BI dashboard
 """
 
 import argparse
@@ -15,19 +14,19 @@ from src.ai_insights import InsightGenerator
 from src.report_generator import ReportGenerator
 
 def main():
-    """Main application entry point"""
+    """Main application entry point with enhanced insights"""
     
     parser = argparse.ArgumentParser(
-        description='Generate AI-powered insights for TV media buy campaigns with Power BI CSV export',
+        description='Generate comprehensive AI-powered insights for TV media buy campaigns with Power BI integration',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 Examples:
-  python main.py --client BARK --days 30        # Analyze BARK client, save all reports + CSV
-  python main.py --client OPOS --days 7         # Analyze OPOS client, last 7 days  
+  python main.py --client BARK --days 30        # Generate comprehensive insights for BARK
+  python main.py --client OPOS --days 7         # Analyze OPOS with granular station/daypart insights  
   python main.py --list-clients                 # Show available clients
-  python main.py --client ALL --days 14         # Analyze all clients combined
-  python main.py --client BARK --no-console     # Generate reports without console output
-  python main.py --client OPOS --csv-only       # Generate only CSV for Power BI import
+  python main.py --client ALL --days 14         # Analyze all clients with full insight matrix
+  python main.py --client BARK --powerbi-ready  # Generate Power BI optimized insights
+  python main.py --client OPOS --insights-only  # Generate only enhanced insights CSV
         '''
     )
     
@@ -40,27 +39,34 @@ Examples:
                        help='Output format (default: both)')
     parser.add_argument('--list-clients', action='store_true',
                        help='List available clients and exit')
+    parser.add_argument('--powerbi-ready', action='store_true',
+                       help='Generate Power BI optimized reports with comprehensive insights')
+    parser.add_argument('--insights-only', action='store_true',
+                       help='Generate only enhanced insights CSV for Power BI import')
     parser.add_argument('--no-console', action='store_true',
                        help='Skip console output, save reports only')
-    parser.add_argument('--csv-only', action='store_true',
-                       help='Generate only CSV file for Power BI import')
-    parser.add_argument('--executive-only', action='store_true',
-                       help='Save only executive summary, skip detailed reports')
-    parser.add_argument('--include-json', action='store_true',
-                       help='Include raw JSON data file in addition to formatted reports')
+    parser.add_argument('--include-quadrants', action='store_true',
+                       help='Include performance quadrant analysis in outputs')
+    parser.add_argument('--detailed-combinations', action='store_true',
+                       help='Generate detailed station+daypart combination insights')
     
     args = parser.parse_args()
     
     # Handle flag combinations
-    if args.no_console:
+    if args.no_console or args.insights_only:
         args.output = 'file'
-    elif args.csv_only:
-        args.output = 'file'
+    elif args.powerbi_ready:
+        args.output = 'both'
+        args.include_quadrants = True
+        args.detailed_combinations = True
     
     # Print header
-    print("🚀 AI-Powered Media Buy Insights")
-    print("=" * 60)
+    print("🚀 Enhanced AI-Powered Media Buy Insights")
+    print("=" * 70)
     print(f"📅 Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    if args.powerbi_ready:
+        print("🎯 Power BI Dashboard Mode: Comprehensive insights enabled")
     
     try:
         # Initialize database connection
@@ -116,73 +122,92 @@ Examples:
         
         print(f"✅ Found {len(campaign_data):,} attributed TV spots for analysis")
         
-        # Initialize analysis components
-        print("\n🧮 Calculating campaign KPIs...")
+        # Initialize enhanced analysis components
+        print("\n🧮 Calculating comprehensive campaign KPIs...")
         kpi_calculator = KPICalculator()
         kpis = kpi_calculator.calculate_campaign_kpis(campaign_data)
         
-        print("🤖 Generating AI insights...")
+        print("🤖 Generating comprehensive AI insights with granular analysis...")
         insight_generator = InsightGenerator()
-        insights = insight_generator.generate_comprehensive_insights(kpis, client_name)
+        comprehensive_insights = insight_generator.generate_comprehensive_insights(kpis, client_name)
         
+        print(f"📊 Generated {comprehensive_insights['metadata']['total_insights_generated']} total insights")
+        
+        # Generate reports
         print("📋 Generating comprehensive reports...")
         report_generator = ReportGenerator()
-        report = report_generator.generate_report(campaign_data, kpis, insights)
+        
+        # Create enhanced report structure
+        report = report_generator.generate_report(campaign_data, kpis, comprehensive_insights)
         
         # Output results based on user preferences
         saved_files = {}
         
-        # Console output (unless suppressed or CSV-only)
-        if args.output in ['console', 'both'] and not args.csv_only:
-            report_generator.print_to_console(report)
+        # Console output (unless suppressed or insights-only)
+        if args.output in ['console', 'both'] and not args.insights_only:
+            if args.powerbi_ready:
+                print("\n" + "="*70)
+                print("📊 POWER BI DASHBOARD INSIGHTS PREVIEW")
+                print("="*70)
+                report_generator.print_insights_summary(comprehensive_insights)
+            else:
+                report_generator.print_to_console(report)
         
         # File output
-        if args.output in ['file', 'both'] or args.csv_only:
-            print(f"\n💾 Saving reports to output/reports/...")
+        if args.output in ['file', 'both'] or args.insights_only or args.powerbi_ready:
+            print(f"\n💾 Saving enhanced reports to output/reports/...")
             
-            if args.csv_only:
-                # Save only CSV for Power BI
-                csv_file = report_generator.save_ai_insights_csv(report)
+            base_filename = f"{client_name.lower()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+            if args.insights_only:
+                # Save only comprehensive insights CSV
+                csv_file = insight_generator.save_insights_csv(comprehensive_insights, f"{base_filename}_insights")
                 if csv_file:
-                    saved_files['ai_insights_csv'] = csv_file
-                    print(f"\n📊 Power BI CSV Export Complete!")
+                    saved_files['insights_csv'] = csv_file
+                    print(f"\n📊 Comprehensive Insights CSV Export Complete!")
                     print(f"   📁 File: {csv_file}")
-                    print(f"   💡 Import this CSV into Power BI for dashboard insights")
+                    print(f"   💡 Import this CSV into Power BI for comprehensive dashboard insights")
                 
-            elif args.executive_only:
-                # Save only executive summary
-                exec_file = report_generator.save_executive_summary(report)
+            elif args.powerbi_ready:
+                # Save all Power BI optimized reports
+                detailed_file = report_generator.save_detailed_report(report, f"{base_filename}_powerbi_detailed")
+                exec_file = report_generator.save_executive_summary(report, f"{base_filename}_powerbi_executive")
+                insights_csv = insight_generator.save_insights_csv(comprehensive_insights, f"{base_filename}_powerbi_insights")
+                
+                # Additional Power BI specific exports
+                station_csv = report_generator.save_station_performance_csv(report, f"{base_filename}_station_performance")
+                daypart_csv = report_generator.save_daypart_performance_csv(report, f"{base_filename}_daypart_performance")
+                combination_csv = report_generator.save_combination_performance_csv(report, f"{base_filename}_combination_performance")
+                
+                if detailed_file:
+                    saved_files['powerbi_detailed'] = detailed_file
                 if exec_file:
-                    saved_files['executive_summary'] = exec_file
-                
-                # Always include CSV for Power BI integration
-                csv_file = report_generator.save_ai_insights_csv(report)
-                if csv_file:
-                    saved_files['ai_insights_csv'] = csv_file
+                    saved_files['powerbi_executive'] = exec_file
+                if insights_csv:
+                    saved_files['powerbi_insights'] = insights_csv
+                if station_csv:
+                    saved_files['station_performance'] = station_csv
+                if daypart_csv:
+                    saved_files['daypart_performance'] = daypart_csv
+                if combination_csv:
+                    saved_files['combination_performance'] = combination_csv
                 
             else:
-                # Save all reports by default
-                if args.include_json:
-                    # Save all report types including JSON
-                    saved_files = report_generator.save_all_reports(report)
-                else:
-                    # Save detailed, executive, and CSV reports (skip JSON)
-                    base_filename = f"{client_name.lower()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                    
-                    detailed_file = report_generator.save_detailed_report(report, f"{base_filename}_detailed")
-                    exec_file = report_generator.save_executive_summary(report, f"{base_filename}_executive")
-                    csv_file = report_generator.save_ai_insights_csv(report, f"{base_filename}_ai_insights")
-                    
-                    if detailed_file:
-                        saved_files['detailed_analysis'] = detailed_file
-                    if exec_file:
-                        saved_files['executive_summary'] = exec_file
-                    if csv_file:
-                        saved_files['ai_insights_csv'] = csv_file
+                # Save standard reports
+                detailed_file = report_generator.save_detailed_report(report, f"{base_filename}_detailed")
+                exec_file = report_generator.save_executive_summary(report, f"{base_filename}_executive")
+                insights_csv = insight_generator.save_insights_csv(comprehensive_insights, f"{base_filename}_insights")
+                
+                if detailed_file:
+                    saved_files['detailed'] = detailed_file
+                if exec_file:
+                    saved_files['executive'] = exec_file
+                if insights_csv:
+                    saved_files['insights'] = insights_csv
         
         # Report what was saved
         if saved_files:
-            if not args.csv_only:
+            if not args.insights_only:
                 print(f"\n📁 Reports saved successfully:")
                 for report_type, filepath in saved_files.items():
                     report_name = report_type.replace('_', ' ').title()
@@ -203,37 +228,61 @@ Examples:
                 
                 if total_size > 0:
                     print(f"   📦 Total: {total_size:.1f} KB")
+        
+        # Power BI integration guidance
+        if args.powerbi_ready or args.insights_only:
+            print(f"\n🎯 Power BI Dashboard Integration Ready!")
             
-            # Highlight CSV file for Power BI
-            if 'ai_insights_csv' in saved_files:
-                print(f"\n🎯 Power BI Integration Ready!")
-                print(f"   📊 CSV File: {saved_files['ai_insights_csv']}")
-                print(f"   💡 Import this CSV into your Power BI dashboard for AI insights")
-        
-        print(f"\n✅ Analysis complete for {client_name}!")
-        
-        # Provide quick summary of key insights (unless CSV-only)
-        if not args.csv_only:
-            if insights.get('key_findings'):
-                print(f"\n🔍 Quick Insights:")
-                for i, finding in enumerate(insights['key_findings'][:3], 1):
-                    print(f"   {i}. {finding}")
+            if args.powerbi_ready:
+                print(f"📊 Complete dataset exported:")
+                print(f"   • AI Insights: {saved_files.get('powerbi_insights', 'N/A')}")
+                print(f"   • Station Performance: {saved_files.get('station_performance', 'N/A')}")
+                print(f"   • Daypart Performance: {saved_files.get('daypart_performance', 'N/A')}")
+                print(f"   • Combination Analysis: {saved_files.get('combination_performance', 'N/A')}")
+            else:
+                print(f"📊 AI Insights: {saved_files.get('insights_csv', 'N/A')}")
             
-            # Show top optimization priority
-            priorities = insights.get('optimization_priorities', [])
-            if priorities:
-                top_priority = priorities[0]
-                impact_emoji = "🔥" if top_priority.get('impact') == 'High' else "📈"
-                print(f"\n⚡ Top Priority: {top_priority.get('recommendation', 'Review detailed reports')} {impact_emoji}")
-        
-        # CSV-specific success message
-        if args.csv_only:
-            print(f"\n🎉 CSV export successful! Ready for Power BI import.")
-            print(f"📝 Next steps:")
+            print(f"\n📝 Power BI Import Instructions:")
             print(f"   1. Open Power BI Desktop")
             print(f"   2. Get Data → Text/CSV")
-            print(f"   3. Import: {saved_files.get('ai_insights_csv', 'CSV file')}")
-            print(f"   4. Create relationships using client + product keys")
+            print(f"   3. Import all CSV files from output/reports/")
+            print(f"   4. Create relationships using client + station + daypart keys")
+            print(f"   5. Build visualizations using the insight categories and performance metrics")
+        
+        # Provide quick summary of key insights (unless insights-only)
+        if not args.insights_only:
+            print(f"\n🔍 Quick Insights Preview:")
+            
+            # Show key findings
+            key_findings = comprehensive_insights.get('key_findings', [])
+            for i, finding in enumerate(key_findings[:3], 1):
+                print(f"   {i}. {finding}")
+            
+            # Show top station insight
+            station_insights = comprehensive_insights.get('station_insights', [])
+            if station_insights:
+                top_station_insight = station_insights[0]
+                impact_emoji = "🔥" if top_station_insight.get('priority', 999) <= 2 else "📈"
+                print(f"\n⚡ Top Station Opportunity: {top_station_insight.get('recommendation', 'See detailed reports')} {impact_emoji}")
+            
+            # Show top daypart insight
+            daypart_insights = comprehensive_insights.get('daypart_insights', [])
+            if daypart_insights:
+                top_daypart_insight = daypart_insights[0]
+                print(f"⏰ Top Daypart Opportunity: {top_daypart_insight.get('recommendation', 'See detailed reports')}")
+            
+            # Show quadrant analysis if included
+            if args.include_quadrants:
+                quadrants = comprehensive_insights.get('performance_quadrants', {})
+                if quadrants:
+                    champions = quadrants.get('high_volume_high_efficiency', [])
+                    hidden_gems = quadrants.get('low_volume_high_efficiency', [])
+                    print(f"\n🏆 Performance Quadrants:")
+                    print(f"   • Champions (Scale these): {len(champions)} stations")
+                    print(f"   • Hidden Gems (Test these): {len(hidden_gems)} stations")
+        
+        print(f"\n✅ Comprehensive analysis complete for {client_name}!")
+        print(f"📈 Total insights generated: {comprehensive_insights['metadata']['total_insights_generated']}")
         
         # Close database connection
         db.close()
@@ -242,23 +291,26 @@ Examples:
         print("\n\n⚠️  Analysis interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Analysis failed: {str(e)}")
+        print(f"\n❌ Comprehensive analysis failed: {str(e)}")
         print("\n💡 Troubleshooting:")
         print("   1. Check your .env file has correct database credentials")
         print("   2. Ensure GEMINI_API_KEY is set for AI insights")
         print("   3. Verify database connectivity and table access")
         print("   4. Try with --list-clients to verify data availability")
-        print("   5. Use --csv-only flag to skip console output if needed")
+        print("   5. Use --insights-only flag to generate only CSV exports")
+        print("   6. Try --powerbi-ready for complete Power BI integration")
         sys.exit(1)
 
 def print_version_info():
     """Print system information"""
     print("System Components:")
     print("  • Database: PostgreSQL with Polars analytics")
-    print("  • AI Engine: Google Gemini 1.5")
-    print("  • Analytics: Campaign KPI calculation")
+    print("  • AI Engine: Google Gemini 2.0 Flash")
+    print("  • Analytics: Comprehensive KPI calculation with quadrant analysis")
+    print("  • Insights: Granular station, daypart, and combination analysis")
     print("  • Reports: Console + Detailed Text + Executive Summary + CSV")
-    print("  • Power BI: CSV export for dashboard integration")
+    print("  • Power BI: Multi-table CSV export for advanced dashboard integration")
+    print("  • Visualizations: Performance quadrants, opportunity matrix, budget reallocation")
 
 if __name__ == "__main__":
     main()

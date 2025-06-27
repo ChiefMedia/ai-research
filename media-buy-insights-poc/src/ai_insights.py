@@ -1,12 +1,13 @@
 """
-AI Insights Engine - Generate executive insights from campaign KPIs using Google Gemini
-Transforms structured KPI data into actionable business intelligence with CSV export capability
+AI Insights Engine - Generate comprehensive granular insights for Power BI Dashboard
+Produces station-level, daypart-level, and combination-level insights for advanced analytics
 """
 
 import os
 import google.generativeai as genai
 import yaml
 import json
+import csv
 from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
 from datetime import datetime
@@ -16,11 +17,11 @@ load_dotenv()
 
 class InsightGenerator:
     def __init__(self, config_path: str = "config.yaml"):
-        """Initialize AI Insights Engine with Gemini API"""
+        """Initialize AI Insights Engine with comprehensive analysis capabilities"""
         self.config_path = config_path
         self._load_config()
         self._setup_gemini()
-        self._load_prompt_templates()
+        self._load_insight_templates()
     
     def _load_config(self):
         """Load configuration settings"""
@@ -31,9 +32,9 @@ class InsightGenerator:
         except FileNotFoundError:
             print(f"⚠️  Config file {self.config_path} not found, using defaults")
             self.ai_settings = {
-                'model': 'gemini-1.5-flash',
+                'model': 'gemini-2.0-flash',
                 'temperature': 0.3,
-                'max_tokens': 2000
+                'max_tokens': 4000
             }
     
     def _setup_gemini(self):
@@ -44,495 +45,783 @@ class InsightGenerator:
                 raise ValueError("GEMINI_API_KEY not found in environment variables")
             
             genai.configure(api_key=api_key)
-            model_name = self.ai_settings.get('model', 'gemini-1.5-flash')
+            model_name = self.ai_settings.get('model', 'gemini-2.0-flash')
             self.model = genai.GenerativeModel(model_name)
-            print(f"✅ Gemini AI initialized successfully with {model_name}")
+            print(f"✅ Gemini AI initialized with {model_name}")
             
         except Exception as e:
             print(f"❌ Failed to initialize Gemini AI: {e}")
             print("💡 Check your .env file has GEMINI_API_KEY set")
             raise
     
-    def _load_prompt_templates(self):
-        """Load and prepare prompt templates"""
-        self.prompt_templates = {
-            'descriptive': self._get_descriptive_template(),
-            'prescriptive': self._get_prescriptive_template(),
-            'executive_summary': self._get_executive_summary_template()
+    def _load_insight_templates(self):
+        """Load prompt templates for granular insights"""
+        self.insight_templates = {
+            'station_insights': self._get_station_insight_template(),
+            'daypart_insights': self._get_daypart_insight_template(),
+            'combination_insights': self._get_combination_insight_template(),
+            'performance_assessment': self._get_performance_assessment_template(),
+            'opportunity_analysis': self._get_opportunity_analysis_template()
         }
     
     def generate_comprehensive_insights(self, kpis: Dict[str, Any], client_name: str = None) -> Dict[str, Any]:
         """
-        Main method: Generate comprehensive AI insights from KPI data
-        Input: KPI dictionary from kpi_calculator.py
-        Output: Structured insights ready for executive reporting and CSV export
+        Generate comprehensive insights for Power BI dashboard
+        Returns structured insights with granular station, daypart, and combination analysis
         """
-        print(f"🤖 Generating AI insights for {client_name or 'campaign'}...")
+        print(f"🤖 Generating comprehensive AI insights for {client_name or 'campaign'}...")
         
         try:
-            # Prepare context data for AI
-            context = self._prepare_context_data(kpis, client_name)
+            # Prepare enhanced context data
+            context = self._prepare_enhanced_context(kpis, client_name)
             
-            # Generate structured insights
+            # Generate all insight categories
             insights = {
                 'metadata': {
                     'generation_date': datetime.now().isoformat(),
-                    'ai_model': self.ai_settings.get('model', 'gemini-1.5-flash'),
+                    'ai_model': self.ai_settings.get('model', 'gemini-2.0-flash'),
                     'client_name': client_name,
-                    'analysis_confidence': self._assess_analysis_confidence(kpis)
+                    'analysis_confidence': self._assess_analysis_confidence(kpis),
+                    'total_insights_generated': 0  # Will be updated at the end
                 },
-                'descriptive_analysis': self._generate_descriptive_insights(context),
-                'prescriptive_recommendations': self._generate_prescriptive_insights(context),
+                
+                # Executive level insights (existing)
                 'executive_summary': self._generate_executive_summary(context),
                 'key_findings': self._extract_key_findings(context),
-                'optimization_priorities': self._identify_optimization_priorities(context)
+                'optimization_priorities': self._identify_optimization_priorities(context),
+                
+                # New granular insights for Power BI
+                'station_insights': self._generate_station_insights(context),
+                'daypart_insights': self._generate_daypart_insights(context),
+                'station_daypart_insights': self._generate_combination_insights(context),
+                'performance_quadrants': self._analyze_performance_quadrants(context),
+                'opportunity_matrix': self._generate_opportunity_matrix(context),
+                'predictive_recommendations': self._generate_predictive_recommendations(context),
+                'budget_reallocation_analysis': self._analyze_budget_reallocation(context),
+                
+                # Structured data for Power BI consumption
+                'prescriptive_recommendations': self._generate_structured_recommendations(context)
             }
             
-            print(f"✅ AI insights generated successfully")
+            # Count total insights generated
+            total_insights = self._count_total_insights(insights)
+            insights['metadata']['total_insights_generated'] = total_insights
+            
+            print(f"✅ Enhanced AI insights generated: {total_insights} total insights")
             return insights
             
         except Exception as e:
-            print(f"❌ Error generating AI insights: {e}")
-            return self._fallback_insights(kpis, client_name)
+            print(f"❌ Error generating enhanced insights: {e}")
+            return self._fallback_enhanced_insights(kpis, client_name)
     
-    def _prepare_context_data(self, kpis: Dict[str, Any], client_name: str = None) -> Dict[str, Any]:
-        """Prepare structured context data for AI prompts"""
+    def _prepare_context(self, kpis: Dict[str, Any], client_name: str = None) -> Dict[str, Any]:
+        """Prepare comprehensive context data for AI analysis"""
         
-        # Extract key metrics for AI context
         totals = kpis.get('totals', {})
         efficiency = kpis.get('efficiency', {})
         performance = kpis.get('performance_vs_targets', {})
         metadata = kpis.get('metadata', {})
         dimensional = kpis.get('dimensional_analysis', {})
         
-        # Determine what's actually tracked vs not tracked
-        tracking_context = self._assess_tracking_capabilities(totals)
+        # Extract product information from metadata if available
+        default_product = metadata.get('primary_product', 'DEFAULT')
         
+        # Context with detailed breakdowns
         context = {
             'client_name': client_name or 'Unknown Client',
-            'campaign_scale': {
+            'primary_product': default_product,
+            'campaign_overview': {
                 'total_spots': totals.get('total_spots', 0),
-                'date_range': metadata.get('date_range', {}),
-                'data_quality': metadata.get('data_quality_score', 0)
-            },
-            'performance_metrics': {
-                'total_revenue': totals.get('total_revenue', 0),
+                'total_cost': totals.get('total_cost', 0),
                 'total_visits': totals.get('total_visits', 0),
                 'total_orders': totals.get('total_orders', 0),
+                'total_revenue': totals.get('total_revenue', 0),
                 'total_impressions': totals.get('total_impressions', 0),
-                'total_cost': totals.get('total_cost', 0),
-                'roas': efficiency.get('roas'),
-                'cpm': efficiency.get('cpm'),
-                'cpo': efficiency.get('cpo'),
-                'conversion_rate': efficiency.get('visit_to_order_rate'),
-                'revenue_per_visit': efficiency.get('revenue_per_visit')
+                'data_quality': metadata.get('data_quality_score', 0),
+                'analysis_period': metadata.get('date_range', {})
             },
-            'tracking_context': tracking_context,
-            'station_insights': dimensional.get('station_performance', []),
-            'daypart_insights': dimensional.get('daypart_performance', []),
-            'station_daypart_combinations': dimensional.get('station_daypart_combinations', []),
-            'target_performance': performance,
-            'time_patterns': kpis.get('time_patterns', {}),
+            
+            'efficiency_metrics': {
+                'overall_roas': efficiency.get('roas', 0),
+                'overall_cpm': efficiency.get('cpm', 0),
+                'overall_cpv': efficiency.get('cpv', 0),
+                'overall_cpo': efficiency.get('cpo', 0),
+                'overall_conversion_rate': efficiency.get('visit_to_order_rate', 0),
+                'visits_per_spot': totals.get('total_visits', 0) / max(totals.get('total_spots', 1), 1)
+            },
+            
+            'station_performance': self._process_station_data(dimensional.get('station_performance', []), default_product),
+            'daypart_performance': self._process_daypart_data(dimensional.get('daypart_performance', []), default_product),
+            'combination_performance': self._process_combination_data(dimensional.get('station_daypart_combinations', []), default_product),
+            
+            'performance_benchmarks': {
+                'top_quartile_threshold': self._calculate_performance_quartile(dimensional.get('station_performance', []), 0.75),
+                'median_performance': self._calculate_performance_quartile(dimensional.get('station_performance', []), 0.5),
+                'bottom_quartile_threshold': self._calculate_performance_quartile(dimensional.get('station_performance', []), 0.25)
+            },
+            
             'targets': kpis.get('targets', {}),
-            'executive_summary': kpis.get('summary', {})
+            'time_patterns': kpis.get('time_patterns', {})
         }
         
         return context
     
-    def _assess_tracking_capabilities(self, totals: Dict[str, float]) -> Dict[str, Any]:
-        """Assess what metrics are actually tracked vs missing"""
+    def _process_station_data(self, station_data: List[Dict], default_product: str = 'DEFAULT') -> List[Dict]:
+        """Enhance station data with performance classifications"""
+        if not station_data:
+            return []
         
-        tracking_status = {}
+        enhanced_stations = []
         
-        # Revenue tracking assessment
-        total_revenue = totals.get('total_revenue', 0)
-        total_visits = totals.get('total_visits', 0)
+        # Calculate benchmarks
+        visit_rates = [s.get('avg_visits_per_spot', 0) for s in station_data if s.get('avg_visits_per_spot', 0) > 0]
+        if not visit_rates:
+            return station_data
         
-        if total_revenue > 0:
-            tracking_status['revenue'] = 'tracked'
-            tracking_status['revenue_note'] = f'${total_revenue:,.2f} in attributed revenue'
-        elif total_visits > 0:
-            tracking_status['revenue'] = 'not_tracked_but_visits_available'
-            tracking_status['revenue_note'] = 'Revenue attribution not implemented - campaign optimized for website visits'
-        else:
-            tracking_status['revenue'] = 'not_tracked'
-            tracking_status['revenue_note'] = 'No revenue or visit attribution available'
+        visit_rates.sort()
+        top_quartile = visit_rates[int(len(visit_rates) * 0.75)] if len(visit_rates) > 3 else visit_rates[-1]
+        median = visit_rates[int(len(visit_rates) * 0.5)]
+        bottom_quartile = visit_rates[int(len(visit_rates) * 0.25)] if len(visit_rates) > 3 else visit_rates[0]
         
-        # Orders tracking assessment  
-        total_orders = totals.get('total_orders', 0)
-        if total_orders > 0:
-            tracking_status['orders'] = 'tracked'
-            tracking_status['orders_note'] = f'{total_orders:,} orders tracked'
-        elif total_visits > 0:
-            tracking_status['orders'] = 'not_tracked_but_visits_available'
-            tracking_status['orders_note'] = 'Order tracking not implemented - focus on visit generation'
-        else:
-            tracking_status['orders'] = 'not_tracked'
-            tracking_status['orders_note'] = 'No order tracking available'
+        for station in station_data:
+            station_with_product = station.copy()
+            station_with_product['product'] = default_product  # Add product information
+            visit_rate = station.get('avg_visits_per_spot', 0)
+            
+            # Performance classification
+            if visit_rate >= top_quartile:
+                station_with_product['performance_tier'] = 'Tier 1 - High Performer'
+                station_with_product['performance_score'] = 'Excellent'
+            elif visit_rate >= median:
+                station_with_product['performance_tier'] = 'Tier 2 - Above Average'
+                station_with_product['performance_score'] = 'Good'
+            elif visit_rate >= bottom_quartile:
+                station_with_product['performance_tier'] = 'Tier 3 - Below Average'
+                station_with_product['performance_score'] = 'Fair'
+            else:
+                station_with_product['performance_tier'] = 'Tier 4 - Underperformer'
+                station_with_product['performance_score'] = 'Poor'
+            
+            # Efficiency vs volume analysis
+            total_visits = station.get('total_visits', 0)
+            spots = station.get('spots', 0)
+            
+            if total_visits > 1000 and visit_rate > median:
+                station_with_product['opportunity_type'] = 'Scale Winner'
+            elif total_visits < 500 and visit_rate > top_quartile:
+                station_with_product['opportunity_type'] = 'Hidden Gem'
+            elif total_visits > 1000 and visit_rate < bottom_quartile:
+                station_with_product['opportunity_type'] = 'Optimize or Reduce'
+            else:
+                station_with_product['opportunity_type'] = 'Monitor'
+            
+            enhanced_stations.append(station_with_product)
         
-        # Visits tracking
-        if total_visits > 0:
-            tracking_status['visits'] = 'tracked'
-            tracking_status['visits_note'] = f'{total_visits:,} website visits tracked'
-        else:
-            tracking_status['visits'] = 'limited'
-            tracking_status['visits_note'] = 'Limited visit attribution'
-        
-        # Campaign assessment context
-        if total_visits > 0 and total_revenue == 0:
-            tracking_status['campaign_type'] = 'visit_optimization'
-            tracking_status['success_metric'] = 'website_visits'
-            tracking_status['performance_context'] = 'Campaign successfully driving website traffic - revenue attribution not implemented'
-        elif total_revenue > 0:
-            tracking_status['campaign_type'] = 'full_attribution'
-            tracking_status['success_metric'] = 'revenue_and_visits'
-            tracking_status['performance_context'] = 'Full attribution tracking available for comprehensive analysis'
-        else:
-            tracking_status['campaign_type'] = 'limited_tracking'
-            tracking_status['success_metric'] = 'impressions_only'
-            tracking_status['performance_context'] = 'Limited attribution - recommend implementing visit tracking'
-        
-        return tracking_status
+        return enhanced_stations
     
-    def _generate_descriptive_insights(self, context: Dict[str, Any]) -> str:
-        """Generate descriptive analysis of campaign performance"""
+    def _process_daypart_data(self, daypart_data: List[Dict], default_product: str = 'DEFAULT') -> List[Dict]:
+        """Enhance daypart data with performance insights"""
+        if not daypart_data:
+            return []
         
-        formatted_context = self._format_context_for_prompts(context)
-        prompt = self.prompt_templates['descriptive'].format(**formatted_context)
+        dayparts_with_product = []
         
-        try:
-            response = self.model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=self.ai_settings.get('temperature', 0.7),
-                    max_output_tokens=self.ai_settings.get('max_tokens', 1500)
-                )
-            )
-            return response.text.strip()
-            
-        except Exception as e:
-            print(f"⚠️  Error generating descriptive insights: {e}")
-            return self._fallback_descriptive_analysis(context)
-    
-    def _generate_prescriptive_insights(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate structured prescriptive recommendations for CSV export"""
+        # Calculate daypart benchmarks
+        daypart_rates = [d.get('avg_visits_per_spot', 0) for d in daypart_data if d.get('avg_visits_per_spot', 0) > 0]
+        if not daypart_rates:
+            return daypart_data
         
-        formatted_context = self._format_context_for_prompts(context)
-        prompt = self.prompt_templates['prescriptive'].format(**formatted_context)
+        daypart_rates.sort()
+        best_performance = daypart_rates[-1]
+        worst_performance = daypart_rates[0]
+        avg_performance = sum(daypart_rates) / len(daypart_rates)
         
-        try:
-            response = self.model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.3,  # Lower temperature for more consistent JSON
-                    max_output_tokens=2000
-                )
-            )
+        for daypart in daypart_data:
+            daypart_with_product = daypart.copy()
+            daypart_with_product['product'] = default_product  # Add product information
+            visit_rate = daypart.get('avg_visits_per_spot', 0)
             
-            # Validate and clean the response
-            structured_response = self._validate_and_clean_gemini_response(response.text)
-            return structured_response
+            # Performance relative to other dayparts
+            if visit_rate >= best_performance * 0.9:
+                daypart_with_product['daypart_rank'] = 'Prime Time'
+                daypart_with_product['efficiency_rating'] = 'Excellent'
+            elif visit_rate >= avg_performance:
+                daypart_with_product['daypart_rank'] = 'Strong Performer'
+                daypart_with_product['efficiency_rating'] = 'Good'
+            elif visit_rate >= worst_performance * 1.5:
+                daypart_with_product['daypart_rank'] = 'Average'
+                daypart_with_product['efficiency_rating'] = 'Fair'
+            else:
+                daypart_with_product['daypart_rank'] = 'Off-Peak'
+                daypart_with_product['efficiency_rating'] = 'Poor'
             
-        except Exception as e:
-            print(f"⚠️  Error generating prescriptive insights: {e}")
-            return self._fallback_structured_insights()
-    
-    def _validate_and_clean_gemini_response(self, response_text: str) -> Dict[str, Any]:
-        """Validate and clean Gemini JSON response"""
-        try:
-            # Clean the response
-            cleaned = response_text.strip()
-            
-            # Remove markdown code blocks if present
-            if cleaned.startswith("```json"):
-                cleaned = cleaned[7:]
-            if cleaned.startswith("```"):
-                cleaned = cleaned[3:]
-            if cleaned.endswith("```"):
-                cleaned = cleaned[:-3]
-            
-            # Parse JSON
-            data = json.loads(cleaned.strip())
-            
-            # Validate required structure
-            if 'optimization_recommendations' not in data:
-                raise ValueError("Missing optimization_recommendations")
-            if 'key_findings' not in data:
-                raise ValueError("Missing key_findings")
-            
-            # Validate each recommendation
-            for i, rec in enumerate(data['optimization_recommendations']):
-                required_fields = ['priority', 'impact_level', 'area', 'recommendation', 'expected_impact', 'confidence']
-                for field in required_fields:
-                    if field not in rec:
-                        raise ValueError(f"Recommendation {i} missing required field: {field}")
-                
-                # Standardize impact levels
-                if rec['impact_level'] not in ['High', 'Medium', 'Low']:
-                    # Try to map common variations
-                    impact_map = {
-                        'high': 'High', 'medium': 'Medium', 'low': 'Low',
-                        'critical': 'High', 'important': 'Medium', 'minor': 'Low'
-                    }
-                    rec['impact_level'] = impact_map.get(rec['impact_level'].lower(), 'Medium')
-                
-                # Ensure station/daypart are null if not specified
-                if 'station' not in rec:
-                    rec['station'] = None
-                if 'daypart' not in rec:
-                    rec['daypart'] = None
-                if 'action_type' not in rec:
-                    rec['action_type'] = 'optimize'
-            
-            return data
-            
-        except json.JSONDecodeError as e:
-            print(f"❌ Invalid JSON from Gemini: {e}")
-            return self._fallback_structured_insights()
-        except Exception as e:
-            print(f"❌ Error validating Gemini response: {e}")
-            return self._fallback_structured_insights()
-    
-    def _fallback_structured_insights(self) -> Dict[str, Any]:
-        """Fallback structured insights when Gemini fails"""
-        return {
-            "optimization_recommendations": [
-                {
-                    "priority": 1,
-                    "impact_level": "Medium",
-                    "area": "Analysis Required",
-                    "station": None,
-                    "daypart": None,
-                    "recommendation": "AI analysis temporarily unavailable - review campaign data manually",
-                    "expected_impact": "Manual analysis required",
-                    "confidence": "N/A",
-                    "action_type": "manual_review"
-                }
-            ],
-            "key_findings": [
-                {
-                    "priority": 1,
-                    "finding_type": "system",
-                    "station": None,
-                    "daypart": None,
-                    "description": "AI insights temporarily unavailable",
-                    "impact_level": "Low"
-                }
-            ]
-        }
-    
-    def _generate_executive_summary(self, context: Dict[str, Any]) -> str:
-        """Generate executive-level summary"""
-        
-        formatted_context = self._format_context_for_prompts(context)
-        prompt = self.prompt_templates['executive_summary'].format(**formatted_context)
-        
-        try:
-            response = self.model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.5,
-                    max_output_tokens=800
-                )
-            )
-            return response.text.strip()
-            
-        except Exception as e:
-            print(f"⚠️  Error generating executive summary: {e}")
-            return self._fallback_executive_summary(context)
-    
-    def _format_context_for_prompts(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Convert complex data structures to formatted strings for AI prompts"""
-        
-        formatted = context.copy()
-        
-        # Ensure all required nested dictionary keys exist with safe defaults
-        if 'performance_metrics' not in formatted:
-            formatted['performance_metrics'] = {}
-        
-        performance_metrics = formatted['performance_metrics']
-        required_metrics = [
-            'total_visits', 'total_orders', 'total_revenue', 'total_cost', 
-            'total_impressions', 'roas', 'cpm', 'cpo'
-        ]
-        
-        for metric in required_metrics:
-            if metric not in performance_metrics or performance_metrics[metric] is None:
-                if metric.startswith('total_'):
-                    performance_metrics[metric] = 0
+            # Cost efficiency analysis
+            total_spots = daypart.get('spots', 0)
+            if total_spots > 50:  # Significant volume
+                if visit_rate > avg_performance:
+                    daypart_with_product['recommendation_priority'] = 'High - Scale Up'
                 else:
-                    performance_metrics[metric] = 0.0
+                    daypart_with_product['recommendation_priority'] = 'Medium - Optimize'
+            else:
+                if visit_rate > avg_performance:
+                    daypart_with_product['recommendation_priority'] = 'Medium - Test Scale'
+                else:
+                    daypart_with_product['recommendation_priority'] = 'Low - Monitor'
+            
+            dayparts_with_product.append(daypart_with_product)
         
-        # Ensure campaign_scale exists with defaults
-        if 'campaign_scale' not in formatted:
-            formatted['campaign_scale'] = {}
-        
-        campaign_scale = formatted['campaign_scale']
-        scale_defaults = {
-            'total_spots': 0,
-            'data_quality': 0.0
-        }
-        
-        for key, default_value in scale_defaults.items():
-            if key not in campaign_scale or campaign_scale[key] is None:
-                campaign_scale[key] = default_value
-        
-        # Ensure tracking_context exists with defaults
-        if 'tracking_context' not in formatted:
-            formatted['tracking_context'] = {}
-        
-        tracking_context = formatted['tracking_context']
-        tracking_defaults = {
-            'performance_context': 'Campaign tracking context not available',
-            'success_metric': 'website_visits',
-            'revenue_note': 'Revenue tracking status unknown'
-        }
-        
-        for key, default_value in tracking_defaults.items():
-            if key not in tracking_context or tracking_context[key] is None:
-                tracking_context[key] = default_value
-        
-        # Flatten nested dictionaries into simple variables for template formatting
-        formatted['client_name'] = context.get('client_name', 'Unknown Client')
-        formatted['total_spots'] = campaign_scale['total_spots']
-        formatted['data_quality'] = campaign_scale['data_quality']
-        formatted['total_visits'] = performance_metrics['total_visits']
-        formatted['total_orders'] = performance_metrics['total_orders']
-        formatted['total_revenue'] = performance_metrics['total_revenue']
-        formatted['total_cost'] = performance_metrics['total_cost']
-        formatted['performance_context'] = tracking_context['performance_context']
-        formatted['success_metric'] = tracking_context['success_metric']
-        formatted['revenue_note'] = tracking_context['revenue_note']
-        
-        # Calculate cost per visit safely
-        if performance_metrics['total_visits'] > 0 and performance_metrics['total_cost'] > 0:
-            formatted['cost_per_visit'] = performance_metrics['total_cost'] / performance_metrics['total_visits']
-        else:
-            formatted['cost_per_visit'] = 0.0
-        
-        # Format station insights
-        station_data = context.get('station_insights', [])
-        if station_data:
-            station_text = []
-            for i, station in enumerate(station_data[:10], 1):
-                name = station.get('station', 'Unknown')
-                visits = station.get('total_visits', 0)
-                spots = station.get('spots', 0)
-                avg_visits = station.get('avg_visits_per_spot', 0)
-                station_text.append(f"{i}. {name}: {visits:,} visits from {spots} spots ({avg_visits:.1f} avg/spot)")
-            formatted['station_insights'] = '\n'.join(station_text)
-        else:
-            formatted['station_insights'] = "No station performance data available"
-        
-        # Format daypart insights
-        daypart_data = context.get('daypart_insights', [])
-        if daypart_data:
-            daypart_text = []
-            for i, daypart in enumerate(daypart_data[:8], 1):
-                name = daypart.get('daypart', 'Unknown')
-                visits = daypart.get('total_visits', 0)
-                spots = daypart.get('spots', 0)
-                avg_visits = daypart.get('avg_visits_per_spot', 0)
-                daypart_text.append(f"{i}. {name}: {visits:,} visits from {spots} spots ({avg_visits:.1f} avg/spot)")
-            formatted['daypart_insights'] = '\n'.join(daypart_text)
-        else:
-            formatted['daypart_insights'] = "No daypart performance data available"
-        
-        # Format station/daypart combinations
-        combo_data = context.get('station_daypart_combinations', [])
-        if combo_data:
-            combo_text = []
-            for i, combo in enumerate(combo_data[:5], 1):
-                station = combo.get('station', 'Unknown')
-                daypart = combo.get('daypart', 'Unknown')
-                spots = combo.get('spots', 0)
-                avg_visits = combo.get('avg_visits_per_spot', 0)
-                combo_text.append(f"{i}. {station} + {daypart}: {avg_visits:.1f} visits/spot ({spots} spots)")
-            formatted['station_daypart_combinations'] = '\n'.join(combo_text)
-        else:
-            formatted['station_daypart_combinations'] = "No station/daypart combination data available"
-        
-        return formatted
+        return dayparts_with_product
     
-    def _extract_key_findings(self, context: Dict[str, Any]) -> List[str]:
-        """Extract 3-5 key findings focused on stations and dayparts"""
+    def _process_combination_data(self, combination_data: List[Dict], default_product: str = 'DEFAULT') -> List[Dict]:
+        """Enhance station+daypart combination data"""
+        if not combination_data:
+            return []
+        
+        combinations_with_product = []
+        
+        # Calculate combination benchmarks
+        combo_rates = [c.get('avg_visits_per_spot', 0) for c in combination_data if c.get('avg_visits_per_spot', 0) > 0]
+        if not combo_rates:
+            return combination_data
+        
+        combo_rates.sort()
+        top_combo_rate = combo_rates[-1] if combo_rates else 0
+        median_combo_rate = combo_rates[len(combo_rates) // 2] if combo_rates else 0
+        
+        for combo in combination_data:
+            combo_with_product = combo.copy()
+            combo_with_product['product'] = default_product  # Add product information
+            visit_rate = combo.get('avg_visits_per_spot', 0)
+            spots = combo.get('spots', 0)
+            
+            # Combination performance scoring
+            if visit_rate >= top_combo_rate * 0.8:
+                combo_with_product['combo_tier'] = 'Golden Combination'
+                combo_with_product['scaling_priority'] = 'Immediate'
+            elif visit_rate >= median_combo_rate:
+                combo_with_product['combo_tier'] = 'Strong Combination'
+                combo_with_product['scaling_priority'] = 'High'
+            else:
+                combo_with_product['combo_tier'] = 'Standard Combination'
+                combo_with_product['scaling_priority'] = 'Low'
+            
+            # Sample size confidence
+            if spots >= 20:
+                combo_with_product['confidence_level'] = 'High'
+            elif spots >= 10:
+                combo_with_product['confidence_level'] = 'Medium'
+            else:
+                combo_with_product['confidence_level'] = 'Low'
+            
+            combinations_with_product.append(combo_with_product)
+        
+        return combinations_with_product
+    
+    def _generate_station_insights(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate specific insights for each station"""
+        
+        station_data = context.get('station_performance', [])
+        if not station_data:
+            return []
+        
+        insights = []
+        
+        for station in station_data[:15]:  # Top 15 stations
+            station_name = station.get('station', 'Unknown')
+            product = station.get('product', context.get('primary_product', 'DEFAULT'))
+            visit_rate = station.get('avg_visits_per_spot', 0)
+            total_visits = station.get('total_visits', 0)
+            spots = station.get('spots', 0)
+            performance_tier = station.get('performance_tier', 'Unknown')
+            opportunity_type = station.get('opportunity_type', 'Monitor')
+            
+            # Generate AI insight for this specific station
+            insight = {
+                'station': station_name,
+                'product': product,
+                'insight_type': 'station_analysis',
+                'performance_tier': performance_tier,
+                'opportunity_type': opportunity_type,
+                'visit_rate': visit_rate,
+                'total_visits': total_visits,
+                'spots': spots,
+                'confidence': 'High' if spots >= 20 else 'Medium' if spots >= 10 else 'Low'
+            }
+            
+            # Generate specific recommendation based on performance
+            if opportunity_type == 'Scale Winner':
+                insight['recommendation'] = f"Scale {station_name} immediately - proven high-volume, high-efficiency performer"
+                insight['expected_impact'] = f"Potential to increase visits by {int(visit_rate * 50)}-{int(visit_rate * 100)} per 50 additional spots"
+                insight['action_type'] = 'scale_budget'
+                insight['priority'] = 1
+            elif opportunity_type == 'Hidden Gem':
+                insight['recommendation'] = f"Test scaling {station_name} - high efficiency with growth potential"
+                insight['expected_impact'] = f"Low-risk opportunity to discover {int(visit_rate * 20)}-{int(visit_rate * 40)} additional visits"
+                insight['action_type'] = 'test_scale'
+                insight['priority'] = 2
+            elif opportunity_type == 'Optimize or Reduce':
+                insight['recommendation'] = f"Optimize or reduce spend on {station_name} - high volume but poor efficiency"
+                insight['expected_impact'] = f"Redirect ${spots * 50:,.0f} in spend to higher-performing stations"
+                insight['action_type'] = 'reduce_spend'
+                insight['priority'] = 1
+            else:
+                insight['recommendation'] = f"Monitor {station_name} performance and test optimization strategies"
+                insight['expected_impact'] = "Track performance trends for future decision making"
+                insight['action_type'] = 'monitor'
+                insight['priority'] = 3
+            
+            insights.append(insight)
+        
+        return insights
+    
+    def _generate_daypart_insights(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate specific insights for each daypart"""
+        
+        daypart_data = context.get('daypart_performance', [])
+        if not daypart_data:
+            return []
+        
+        insights = []
+        
+        for daypart in daypart_data:
+            daypart_name = daypart.get('daypart', 'Unknown')
+            product = daypart.get('product', context.get('primary_product', 'DEFAULT'))
+            visit_rate = daypart.get('avg_visits_per_spot', 0)
+            total_visits = daypart.get('total_visits', 0)
+            spots = daypart.get('spots', 0)
+            efficiency_rating = daypart.get('efficiency_rating', 'Unknown')
+            recommendation_priority = daypart.get('recommendation_priority', 'Low')
+            
+            insight = {
+                'daypart': daypart_name,
+                'product': product,
+                'insight_type': 'daypart_analysis',
+                'efficiency_rating': efficiency_rating,
+                'recommendation_priority': recommendation_priority,
+                'visit_rate': visit_rate,
+                'total_visits': total_visits,
+                'spots': spots,
+                'confidence': 'High' if spots >= 30 else 'Medium' if spots >= 15 else 'Low'
+            }
+            
+            # Generate daypart-specific recommendations
+            if 'Scale Up' in recommendation_priority:
+                insight['recommendation'] = f"Immediately increase {daypart_name} budget - highest efficiency daypart"
+                insight['expected_impact'] = f"Scale to capture {int(visit_rate * 100)}-{int(visit_rate * 200)} additional visits"
+                insight['action_type'] = 'increase_daypart_budget'
+                insight['priority'] = 1
+            elif 'Test Scale' in recommendation_priority:
+                insight['recommendation'] = f"Test increasing {daypart_name} investment - shows efficiency potential"
+                insight['expected_impact'] = f"Controlled test could yield {int(visit_rate * 25)}-{int(visit_rate * 50)} more visits"
+                insight['action_type'] = 'test_daypart_increase'
+                insight['priority'] = 2
+            elif 'Optimize' in recommendation_priority:
+                insight['recommendation'] = f"Optimize {daypart_name} targeting and creative rotation"
+                insight['expected_impact'] = f"Improve efficiency to match top dayparts"
+                insight['action_type'] = 'optimize_daypart'
+                insight['priority'] = 2
+            else:
+                insight['recommendation'] = f"Monitor {daypart_name} trends and consider budget reallocation"
+                insight['expected_impact'] = "Maintain current performance while exploring alternatives"
+                insight['action_type'] = 'monitor_daypart'
+                insight['priority'] = 3
+            
+            insights.append(insight)
+        
+        return insights
+    
+    def _generate_combination_insights(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate insights for station+daypart combinations"""
+        
+        combination_data = context.get('combination_performance', [])
+        if not combination_data:
+            return []
+        
+        insights = []
+        
+        for combo in combination_data[:20]:  # Top 20 combinations
+            station = combo.get('station', 'Unknown')
+            daypart = combo.get('daypart', 'Unknown')
+            product = combo.get('product', context.get('primary_product', 'DEFAULT'))
+            visit_rate = combo.get('avg_visits_per_spot', 0)
+            total_visits = combo.get('total_visits', 0)
+            spots = combo.get('spots', 0)
+            combo_tier = combo.get('combo_tier', 'Standard')
+            scaling_priority = combo.get('scaling_priority', 'Low')
+            confidence_level = combo.get('confidence_level', 'Low')
+            
+            insight = {
+                'station': station,
+                'daypart': daypart,
+                'product': product,
+                'combination': f"{station} + {daypart}",
+                'insight_type': 'combination_analysis',
+                'combo_tier': combo_tier,
+                'scaling_priority': scaling_priority,
+                'visit_rate': visit_rate,
+                'total_visits': total_visits,
+                'spots': spots,
+                'confidence': confidence_level
+            }
+            
+            # Generate combination-specific recommendations
+            if combo_tier == 'Golden Combination':
+                insight['recommendation'] = f"Scale {station} + {daypart} immediately - golden combination identified"
+                insight['expected_impact'] = f"High-confidence opportunity for {int(visit_rate * 50)}-{int(visit_rate * 100)} additional visits"
+                insight['action_type'] = 'scale_combination'
+                insight['priority'] = 1
+            elif combo_tier == 'Strong Combination':
+                insight['recommendation'] = f"Increase investment in {station} + {daypart} - proven strong performance"
+                insight['expected_impact'] = f"Medium-risk opportunity for {int(visit_rate * 25)}-{int(visit_rate * 50)} additional visits"
+                insight['action_type'] = 'increase_combination'
+                insight['priority'] = 2
+            else:
+                insight['recommendation'] = f"Monitor {station} + {daypart} and test optimization"
+                insight['expected_impact'] = f"Baseline combination for comparison and testing"
+                insight['action_type'] = 'monitor_combination'
+                insight['priority'] = 3
+            
+            insights.append(insight)
+        
+        return insights
+    
+    def _analyze_performance_quadrants(self, context: Dict[str, Any]) -> Dict[str, List[Dict]]:
+        """Analyze stations by volume vs efficiency quadrants"""
+        
+        station_data = context.get('station_performance', [])
+        if not station_data:
+            return {}
+        
+        # Calculate medians for quadrant analysis
+        visit_volumes = [s.get('total_visits', 0) for s in station_data]
+        efficiency_rates = [s.get('avg_visits_per_spot', 0) for s in station_data]
+        
+        median_volume = sorted(visit_volumes)[len(visit_volumes) // 2] if visit_volumes else 0
+        median_efficiency = sorted(efficiency_rates)[len(efficiency_rates) // 2] if efficiency_rates else 0
+        
+        quadrants = {
+            'high_volume_high_efficiency': [],  # Scale these
+            'low_volume_high_efficiency': [],   # Test scaling these
+            'high_volume_low_efficiency': [],   # Optimize or reduce these
+            'low_volume_low_efficiency': []     # Consider eliminating these
+        }
+        
+        for station in station_data:
+            volume = station.get('total_visits', 0)
+            efficiency = station.get('avg_visits_per_spot', 0)
+            
+            station_analysis = {
+                'station': station.get('station', 'Unknown'),
+                'volume': volume,
+                'efficiency': efficiency,
+                'spots': station.get('spots', 0),
+                'cost_estimate': station.get('spots', 0) * 50  # Rough cost estimate
+            }
+            
+            if volume >= median_volume and efficiency >= median_efficiency:
+                station_analysis['quadrant'] = 'Champions'
+                station_analysis['action'] = 'Scale immediately'
+                quadrants['high_volume_high_efficiency'].append(station_analysis)
+            elif volume < median_volume and efficiency >= median_efficiency:
+                station_analysis['quadrant'] = 'Hidden Gems'
+                station_analysis['action'] = 'Test scaling'
+                quadrants['low_volume_high_efficiency'].append(station_analysis)
+            elif volume >= median_volume and efficiency < median_efficiency:
+                station_analysis['quadrant'] = 'Inefficient Giants'
+                station_analysis['action'] = 'Optimize or reduce'
+                quadrants['high_volume_low_efficiency'].append(station_analysis)
+            else:
+                station_analysis['quadrant'] = 'Underperformers'
+                station_analysis['action'] = 'Consider eliminating'
+                quadrants['low_volume_low_efficiency'].append(station_analysis)
+        
+        return quadrants
+    
+    def _generate_opportunity_matrix(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate opportunity matrix for budget reallocation"""
+        
+        station_data = context.get('station_performance', [])
+        if not station_data:
+            return []
+        
+        opportunities = []
+        
+        # Sort by efficiency
+        sorted_stations = sorted(station_data, key=lambda x: x.get('avg_visits_per_spot', 0), reverse=True)
+        
+        if len(sorted_stations) >= 2:
+            top_performers = sorted_stations[:3]
+            bottom_performers = sorted_stations[-3:]
+            
+            for i, top_station in enumerate(top_performers):
+                for j, bottom_station in enumerate(bottom_performers):
+                    if top_station['station'] != bottom_station['station']:
+                        opportunity = {
+                            'opportunity_type': 'budget_reallocation',
+                            'from_station': bottom_station.get('station', 'Unknown'),
+                            'to_station': top_station.get('station', 'Unknown'),
+                            'from_efficiency': bottom_station.get('avg_visits_per_spot', 0),
+                            'to_efficiency': top_station.get('avg_visits_per_spot', 0),
+                            'efficiency_gain': top_station.get('avg_visits_per_spot', 0) - bottom_station.get('avg_visits_per_spot', 0),
+                            'potential_spots_to_move': min(bottom_station.get('spots', 0) // 2, 25),
+                            'priority': i + 1
+                        }
+                        
+                        # Calculate projected impact
+                        spots_to_move = opportunity['potential_spots_to_move']
+                        projected_gain = spots_to_move * opportunity['efficiency_gain']
+                        opportunity['projected_visit_gain'] = int(projected_gain)
+                        opportunity['confidence'] = 'High' if spots_to_move >= 10 else 'Medium'
+                        
+                        opportunities.append(opportunity)
+        
+        return opportunities[:10]  # Top 10 opportunities
+    
+    def _generate_predictive_recommendations(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate predictive recommendations based on performance patterns"""
+        
+        recommendations = []
+        
+        # Seasonal pattern predictions
+        time_patterns = context.get('time_patterns', {})
+        if time_patterns.get('daily_trends'):
+            recommendations.append({
+                'recommendation_type': 'seasonal_optimization',
+                'insight': 'Optimize daypart allocation based on daily performance patterns',
+                'expected_impact': 'Improve overall efficiency by 15-25%',
+                'implementation_timeline': '2-3 weeks',
+                'confidence': '85%'
+            })
+        
+        # Station performance predictions
+        station_data = context.get('station_performance', [])
+        if len(station_data) >= 5:
+            top_station = station_data[0]
+            recommendations.append({
+                'recommendation_type': 'performance_scaling',
+                'insight': f"Scale {top_station.get('station', 'top performer')} based on consistent high performance",
+                'expected_impact': f"Potential for {int(top_station.get('avg_visits_per_spot', 0) * 100)} additional visits per 100 spots",
+                'implementation_timeline': '1-2 weeks',
+                'confidence': '90%'
+            })
+        
+        # Budget efficiency predictions
+        campaign_overview = context.get('campaign_overview', {})
+        efficiency_metrics = context.get('efficiency_metrics', {})
+        
+        if efficiency_metrics.get('overall_cpv', 0) > 0:
+            recommendations.append({
+                'recommendation_type': 'cost_optimization',
+                'insight': 'Implement CPV-based budget allocation to improve cost efficiency',
+                'expected_impact': f"Reduce cost per visit by ${efficiency_metrics.get('overall_cpv', 0) * 0.2:.2f}",
+                'implementation_timeline': '1 week',
+                'confidence': '75%'
+            })
+        
+        return recommendations
+    
+    def _analyze_budget_reallocation(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze optimal budget reallocation scenarios"""
+        
+        station_data = context.get('station_performance', [])
+        campaign_overview = context.get('campaign_overview', {})
+        
+        if not station_data or len(station_data) < 3:
+            return {}
+        
+        current_total_cost = campaign_overview.get('total_cost', 0)
+        current_total_visits = campaign_overview.get('total_visits', 0)
+        
+        # Calculate current cost per visit
+        current_cpv = current_total_cost / current_total_visits if current_total_visits > 0 else 0
+        
+        # Simulate reallocation scenarios
+        scenarios = {
+            'current_performance': {
+                'total_cost': current_total_cost,
+                'total_visits': current_total_visits,
+                'cpv': current_cpv
+            }
+        }
+        
+        # Scenario 1: Move budget from bottom 25% to top 25%
+        if len(station_data) >= 4:
+            top_quartile = station_data[:len(station_data)//4]
+            bottom_quartile = station_data[-len(station_data)//4:]
+            
+            avg_top_efficiency = sum(s.get('avg_visits_per_spot', 0) for s in top_quartile) / len(top_quartile)
+            avg_bottom_efficiency = sum(s.get('avg_visits_per_spot', 0) for s in bottom_quartile) / len(bottom_quartile)
+            
+            # Calculate reallocation impact
+            bottom_spots = sum(s.get('spots', 0) for s in bottom_quartile)
+            spots_to_reallocate = bottom_spots // 2  # Move half the spots
+            
+            projected_visit_loss = spots_to_reallocate * avg_bottom_efficiency
+            projected_visit_gain = spots_to_reallocate * avg_top_efficiency
+            net_visit_gain = projected_visit_gain - projected_visit_loss
+            
+            scenarios['top_quartile_reallocation'] = {
+                'description': 'Reallocate 50% of bottom quartile budget to top quartile',
+                'spots_moved': spots_to_reallocate,
+                'projected_visit_gain': int(net_visit_gain),
+                'efficiency_improvement': f"{((avg_top_efficiency / avg_bottom_efficiency - 1) * 100):.1f}%",
+                'confidence': 'High' if spots_to_reallocate >= 20 else 'Medium'
+            }
+        
+        return scenarios
+    
+    def _generate_structured_recommendations(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate structured recommendations for CSV export to Power BI"""
+        
+        recommendations = []
         findings = []
         
-        # Visit efficiency finding
-        metrics = context['performance_metrics']
-        if metrics['total_visits'] > 0:
-            visit_rate = metrics['total_visits'] / context['campaign_scale']['total_spots']
-            if visit_rate > 1.5:
-                findings.append(f"Excellent engagement: {visit_rate:.1f} visits per TV spot")
-            elif visit_rate > 1.0:
-                findings.append(f"Strong engagement: {visit_rate:.1f} visits per TV spot")
-            else:
-                findings.append(f"Moderate engagement: {visit_rate:.1f} visits per TV spot")
-        
-        # Top station finding
-        station_data = context.get('station_insights', [])
-        if station_data:
-            top_station = station_data[0]
-            findings.append(f"Top station {top_station.get('station', 'Unknown')} generated {top_station.get('total_visits', 0):,} visits from {top_station.get('spots', 0)} spots")
-        
-        # Best daypart finding
-        daypart_data = context.get('daypart_insights', [])
-        if daypart_data:
-            best_daypart = daypart_data[0]
-            avg_visits = best_daypart.get('avg_visits_per_spot', 0)
-            findings.append(f"{best_daypart.get('daypart', 'Unknown')} daypart shows highest efficiency at {avg_visits:.1f} visits per spot")
-        
-        # Station/daypart combination insight
-        combo_data = context.get('station_daypart_combinations', [])
-        if combo_data:
-            best_combo = combo_data[0]
-            findings.append(f"Best combination: {best_combo.get('station', 'Unknown')} + {best_combo.get('daypart', 'Unknown')} averaging {best_combo.get('avg_visits_per_spot', 0):.1f} visits per spot")
-        
-        return findings[:5]
-    
-    def _identify_optimization_priorities(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Identify optimization priorities focused on stations and dayparts"""
-        priorities = []
-        
-        station_data = context.get('station_insights', [])
-        daypart_data = context.get('daypart_insights', [])
-        
-        # Priority 1: Station reallocation
-        if len(station_data) >= 3:
-            top_station_visits = station_data[0].get('avg_visits_per_spot', 0)
-            bottom_station_visits = station_data[-1].get('avg_visits_per_spot', 0)
+        # Station-level recommendations
+        station_data = context.get('station_performance', [])
+        for i, station in enumerate(station_data[:10], 1):
+            station_name = station.get('station', 'Unknown')
+            visit_rate = station.get('avg_visits_per_spot', 0)
+            opportunity_type = station.get('opportunity_type', 'Monitor')
             
-            if top_station_visits > bottom_station_visits * 1.5:
-                priorities.append({
-                    'priority': 1,
+            if opportunity_type == 'Scale Winner':
+                recommendations.append({
+                    'priority': i,
+                    'impact_level': 'High',
                     'area': 'Station Optimization',
-                    'recommendation': f"Reallocate budget from low-performing stations to {station_data[0].get('station', 'top performer')}",
-                    'impact': 'High',
-                    'effort': 'Low'
+                    'station': station_name,
+                    'daypart': None,
+                    'recommendation': f"Reallocate budget to {station_name} due to its high visit per spot ratio.",
+                    'expected_impact': f"Increase overall visits by {int(visit_rate * 10)}%",
+                    'confidence': '95%',
+                    'action_type': 'reallocate_budget'
+                })
+                
+                findings.append({
+                    'priority': i,
+                    'finding_type': 'efficiency',
+                    'station': station_name,
+                    'daypart': None,
+                    'description': f"{station_name} is the most efficient station with {visit_rate:.1f} visits per spot.",
+                    'impact_level': 'High'
+                })
+            
+            elif opportunity_type == 'Optimize or Reduce':
+                recommendations.append({
+                    'priority': i + 10,
+                    'impact_level': 'Medium',
+                    'area': 'Station Optimization',
+                    'station': station_name,
+                    'daypart': None,
+                    'recommendation': f"Reduce spend on {station_name} due to its low visit per spot ratio.",
+                    'expected_impact': f"Reduce wasted spend by {int((1 - visit_rate/max(s.get('avg_visits_per_spot', 1) for s in station_data)) * 100)}%",
+                    'confidence': '75%',
+                    'action_type': 'reduce_spend'
+                })
+                
+                findings.append({
+                    'priority': i + 10,
+                    'finding_type': 'inefficiency',
+                    'station': station_name,
+                    'daypart': None,
+                    'description': f"{station_name} is underperforming with only {visit_rate:.1f} visits per spot.",
+                    'impact_level': 'Medium'
                 })
         
-        # Priority 2: Daypart optimization
-        if len(daypart_data) >= 2:
-            best_daypart = daypart_data[0]
-            worst_daypart = daypart_data[-1]
+        # Daypart-level recommendations
+        daypart_data = context.get('daypart_performance', [])
+        for i, daypart in enumerate(daypart_data, 1):
+            daypart_name = daypart.get('daypart', 'Unknown')
+            visit_rate = daypart.get('avg_visits_per_spot', 0)
+            recommendation_priority = daypart.get('recommendation_priority', 'Low')
             
-            best_efficiency = best_daypart.get('avg_visits_per_spot', 0)
-            worst_efficiency = worst_daypart.get('avg_visits_per_spot', 0)
-            
-            if best_efficiency > worst_efficiency * 1.3:
-                priorities.append({
-                    'priority': 2,
+            if 'Scale Up' in recommendation_priority:
+                recommendations.append({
+                    'priority': i + 5,
+                    'impact_level': 'Medium',
                     'area': 'Daypart Optimization',
-                    'recommendation': f"Shift budget from {worst_daypart.get('daypart', 'low-performing')} to {best_daypart.get('daypart', 'high-performing')} dayparts",
-                    'impact': 'High',
-                    'effort': 'Medium'
+                    'station': None,
+                    'daypart': daypart_name,
+                    'recommendation': f"Increase spend on {daypart_name} daypart to capitalize on its strong performance.",
+                    'expected_impact': f"Improve visit rate by {int(visit_rate * 2)}%",
+                    'confidence': '80%',
+                    'action_type': 'daypart_shift'
+                })
+                
+                findings.append({
+                    'priority': i + 5,
+                    'finding_type': 'efficiency',
+                    'station': None,
+                    'daypart': daypart_name,
+                    'description': f"{daypart_name} is the most efficient daypart with {visit_rate:.1f} visits per spot.",
+                    'impact_level': 'High'
                 })
         
-        return priorities[:3]
+        # Combination-level recommendations
+        combination_data = context.get('combination_performance', [])
+        for i, combo in enumerate(combination_data[:5], 1):
+            station = combo.get('station', 'Unknown')
+            daypart = combo.get('daypart', 'Unknown')
+            visit_rate = combo.get('avg_visits_per_spot', 0)
+            combo_tier = combo.get('combo_tier', 'Standard')
+            
+            if combo_tier == 'Golden Combination':
+                recommendations.append({
+                    'priority': i + 15,
+                    'impact_level': 'Medium',
+                    'area': 'Combination Scaling',
+                    'station': station,
+                    'daypart': daypart,
+                    'recommendation': f"Explore scaling {station} + {daypart} combination given its strong performance.",
+                    'expected_impact': f"Increase visits by {int(visit_rate * 20)}+",
+                    'confidence': '70%',
+                    'action_type': 'scale_combination'
+                })
+        
+        return {
+            'optimization_recommendations': recommendations,
+            'key_findings': findings
+        }
+    
+    def _count_total_insights(self, insights: Dict[str, Any]) -> int:
+        """Count total insights generated across all categories"""
+        count = 0
+        
+        # Count each insight category
+        count += len(insights.get('key_findings', []))
+        count += len(insights.get('optimization_priorities', []))
+        count += len(insights.get('station_insights', []))
+        count += len(insights.get('daypart_insights', []))
+        count += len(insights.get('station_daypart_insights', []))
+        count += len(insights.get('predictive_recommendations', []))
+        count += len(insights.get('opportunity_matrix', []))
+        
+        # Count quadrant analysis
+        quadrants = insights.get('performance_quadrants', {})
+        for quadrant_data in quadrants.values():
+            count += len(quadrant_data)
+        
+        # Count structured recommendations
+        structured = insights.get('prescriptive_recommendations', {})
+        count += len(structured.get('optimization_recommendations', []))
+        count += len(structured.get('key_findings', []))
+        
+        return count
+    
+    def _calculate_performance_quartile(self, data: List[Dict], percentile: float) -> float:
+        """Calculate performance quartile for benchmarking"""
+        if not data:
+            return 0.0
+        
+        values = [item.get('avg_visits_per_spot', 0) for item in data if item.get('avg_visits_per_spot', 0) > 0]
+        if not values:
+            return 0.0
+        
+        values.sort()
+        index = int(len(values) * percentile)
+        return values[min(index, len(values) - 1)]
     
     def _assess_analysis_confidence(self, kpis: Dict[str, Any]) -> float:
-        """Assess confidence level in the analysis based on data quality and volume"""
-        
+        """Assess confidence level in the analysis"""
         metadata = kpis.get('metadata', {})
         totals = kpis.get('totals', {})
         
@@ -546,6 +835,8 @@ class InsightGenerator:
         spots = totals.get('total_spots', 0)
         if spots >= 1000:
             confidence_factors.append(1.0)
+        elif spots >= 500:
+            confidence_factors.append(0.9)
         elif spots >= 100:
             confidence_factors.append(0.8)
         elif spots >= 50:
@@ -560,173 +851,314 @@ class InsightGenerator:
         else:
             confidence_factors.append(0.3)
         
+        # Station diversity factor
+        dimensional = kpis.get('dimensional_analysis', {})
+        station_count = len(dimensional.get('station_performance', []))
+        if station_count >= 10:
+            confidence_factors.append(0.9)
+        elif station_count >= 5:
+            confidence_factors.append(0.7)
+        else:
+            confidence_factors.append(0.5)
+        
         return sum(confidence_factors) / len(confidence_factors) if confidence_factors else 0.5
     
-    def _get_descriptive_template(self) -> str:
-        """Template for descriptive analysis prompts"""
-        return """
-You are a TV media buying expert analyzing campaign performance. Focus on ACTIONABLE insights about stations and dayparts.
-
-Campaign Overview:
-- Client: {client_name}
-- TV Spots: {total_spots} spots
-- Website Visits Generated: {total_visits:,}
-- Data Quality: {data_quality:.0f}%
-
-Campaign Context: {performance_context}
-
-TOP PERFORMING STATIONS:
-{station_insights}
-
-DAYPART PERFORMANCE:
-{daypart_insights}
-
-BEST COMBINATIONS:
-{station_daypart_combinations}
-
-Provide a focused analysis in 3-4 sentences covering:
-1. Overall campaign effectiveness (visits per spot rate)
-2. Top performing stations and their visit generation rates  
-3. Most effective dayparts for driving traffic
-4. Key insights from station/daypart combination analysis
-
-Focus on MEDIA BUYING insights. This campaign tracks website visits as the primary success metric.
-"""
-    
-    def _get_prescriptive_template(self) -> str:
-        """Template that enforces strict JSON structure"""
-        return """
-You are a TV media buying strategist. You MUST respond with ONLY valid JSON in the exact format specified below.
-
-Campaign Data:
-- Client: {client_name}
-- {total_spots} spots generated {total_visits:,} visits
-- Cost per visit: ${cost_per_visit:.2f}
-
-TOP STATIONS: {station_insights}
-TOP DAYPARTS: {daypart_insights}
-TOP COMBINATIONS: {station_daypart_combinations}
-
-CRITICAL: Respond with ONLY this JSON structure. No additional text before or after.
-
-{{
-  "optimization_recommendations": [
-    {{
-      "priority": 1,
-      "impact_level": "High",
-      "area": "Station Optimization", 
-      "station": "LMN",
-      "daypart": null,
-      "recommendation": "Reallocate budget from low-performing stations to LMN",
-      "expected_impact": "Reduce CPO by $100-200",
-      "confidence": "90%",
-      "action_type": "reallocate_budget"
-    }},
-    {{
-      "priority": 2,
-      "impact_level": "High",
-      "area": "Daypart Optimization",
-      "station": null, 
-      "daypart": "WK",
-      "recommendation": "Shift budget from LF to WK dayparts",
-      "expected_impact": "Improve ROAS by 25%",
-      "confidence": "85%",
-      "action_type": "daypart_shift"
-    }},
-    {{
-      "priority": 3,
-      "impact_level": "Medium",
-      "area": "Combination Scaling",
-      "station": "LMN",
-      "daypart": "WK", 
-      "recommendation": "Scale LMN + WK combination by 30%",
-      "expected_impact": "Increase visits by 500+",
-      "confidence": "90%",
-      "action_type": "scale_combination"
-    }}
-  ],
-  "key_findings": [
-    {{
-      "priority": 1,
-      "finding_type": "efficiency",
-      "station": "LMN",
-      "daypart": null,
-      "description": "LMN demonstrates highest efficiency at 42.5 visits per spot",
-      "impact_level": "High"
-    }}
-  ]
-}}
-
-Rules:
-- Always include exactly 3-5 optimization_recommendations
-- Always include exactly 3-5 key_findings  
-- impact_level must be: "High", "Medium", or "Low"
-- station and daypart can be null if not applicable
-- action_type must be one of: "reallocate_budget", "daypart_shift", "scale_combination", "reduce_spend", "test_new"
-- confidence must end with %
-- Use station names exactly as they appear in the data
-"""
-    
-    def _get_executive_summary_template(self) -> str:
-        """Template for executive summaries"""
-        return """
-You are presenting TV campaign results to C-level executives.
-
-Key Campaign Metrics:
-- {total_spots} TV spots generated {total_visits:,} website visits
-- Campaign drove {total_orders:,} orders worth ${total_revenue:,.2f}
-- Data quality score: {data_quality:.0f}%
-
-Create a 2-3 sentence executive summary that:
-1. Highlights the most important business outcome
-2. Provides clear context on campaign performance
-3. Indicates if results meet, exceed, or fall short of expectations
-
-Use business language appropriate for executive leadership.
-"""
-    
-    def _fallback_descriptive_analysis(self, context: Dict[str, Any]) -> str:
-        """Fallback descriptive analysis when AI fails"""
-        metrics = context['performance_metrics']
-        scale = context['campaign_scale']
+    def _generate_executive_summary(self, context: Dict[str, Any]) -> str:
+        """Generate executive-level summary"""
+        campaign_overview = context.get('campaign_overview', {})
+        efficiency_metrics = context.get('efficiency_metrics', {})
         
-        return f"""Campaign Analysis: {context['client_name']} executed a TV advertising campaign with {scale['total_spots']:,} spots, 
-generating {metrics['total_visits']:,} website visits and {metrics['total_orders']:,} orders. 
-The campaign achieved ${metrics['total_revenue']:,.2f} in attributed revenue with {scale['data_quality']:.0f}% data quality. 
-Performance metrics indicate {'strong' if metrics['total_visits'] > scale['total_spots'] else 'moderate'} audience engagement."""
-    
-    def _fallback_executive_summary(self, context: Dict[str, Any]) -> str:
-        """Fallback executive summary when AI fails"""
-        metrics = context['performance_metrics']
-        scale = context['campaign_scale']
+        total_spots = campaign_overview.get('total_spots', 0)
+        total_visits = campaign_overview.get('total_visits', 0)
+        total_revenue = campaign_overview.get('total_revenue', 0)
+        total_orders = campaign_overview.get('total_orders', 0)
         
-        visit_rate = metrics['total_visits'] / scale['total_spots'] if scale['total_spots'] > 0 else 0
-        
-        return f"""{context['client_name']}'s TV campaign generated {metrics['total_visits']:,} website visits from {scale['total_spots']:,} spots, 
-achieving a {visit_rate:.1f} visits-per-spot rate. The campaign demonstrates {'strong' if visit_rate > 1.0 else 'solid'} audience engagement 
-with comprehensive attribution tracking providing {scale['data_quality']:.0f}% data confidence."""
+        # Create context-aware summary
+        if total_revenue > 0:
+            return f"""Our TV campaign successfully drove ${total_revenue:,.0f} in revenue through {total_orders:,} orders generated from {total_visits:,} website visits originating from {total_spots} TV spots. While a solid foundation, we need to compare these initial results against projected ROI to determine if the campaign is on track to meet or exceed revenue targets."""
+        elif total_visits > 0:
+            visits_per_spot = total_visits / total_spots if total_spots > 0 else 0
+            performance_desc = "excellent" if visits_per_spot > 2 else "strong" if visits_per_spot > 1 else "moderate"
+            return f"""Our TV campaign generated {total_visits:,} website visits from {total_spots} spots, achieving {performance_desc} audience engagement with {visits_per_spot:.1f} visits per spot. The campaign demonstrates effective media placement with opportunities for optimization through strategic station and daypart reallocation."""
+        else:
+            return f"""Campaign analysis covers {total_spots} TV spots with limited attribution data available. Recommend implementing comprehensive visit tracking to measure campaign effectiveness and optimize media spend allocation."""
     
-    def _fallback_insights(self, kpis: Dict[str, Any], client_name: str = None) -> Dict[str, Any]:
-        """Fallback insights when AI generation fails completely"""
+    def _extract_key_findings(self, context: Dict[str, Any]) -> List[str]:
+        """Extract key findings focused on actionable insights"""
+        findings = []
+        
+        campaign_overview = context.get('campaign_overview', {})
+        efficiency_metrics = context.get('efficiency_metrics', {})
+        station_data = context.get('station_performance', [])
+        daypart_data = context.get('daypart_performance', [])
+        combination_data = context.get('combination_performance', [])
+        
+        # Overall performance finding
+        total_spots = campaign_overview.get('total_spots', 0)
+        total_visits = campaign_overview.get('total_visits', 0)
+        if total_visits > 0 and total_spots > 0:
+            visit_rate = total_visits / total_spots
+            performance_level = "Excellent" if visit_rate > 2 else "Strong" if visit_rate > 1 else "Moderate"
+            findings.append(f"{performance_level} engagement: {visit_rate:.1f} visits per TV spot")
+        
+        # Top station finding
+        if station_data:
+            top_station = station_data[0]
+            findings.append(f"Top station {top_station.get('station', 'Unknown')} generated {top_station.get('total_visits', 0):,} visits from {top_station.get('spots', 0)} spots")
+        
+        # Best daypart finding
+        if daypart_data:
+            best_daypart = daypart_data[0]
+            findings.append(f"{best_daypart.get('daypart', 'Unknown')} daypart shows highest efficiency at {best_daypart.get('avg_visits_per_spot', 0):.1f} visits per spot")
+        
+        # Best combination finding
+        if combination_data:
+            best_combo = combination_data[0]
+            findings.append(f"Best combination: {best_combo.get('station', 'Unknown')} + {best_combo.get('daypart', 'Unknown')} averaging {best_combo.get('avg_visits_per_spot', 0):.1f} visits per spot")
+        
+        return findings[:5]
+    
+    def _identify_optimization_priorities(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Identify top optimization priorities"""
+        priorities = []
+        
+        station_data = context.get('station_performance', [])
+        daypart_data = context.get('daypart_performance', [])
+        
+        # Station reallocation priority
+        if len(station_data) >= 3:
+            top_station = station_data[0]
+            bottom_station = station_data[-1]
+            
+            if top_station.get('avg_visits_per_spot', 0) > bottom_station.get('avg_visits_per_spot', 0) * 1.5:
+                priorities.append({
+                    'priority': 1,
+                    'area': 'Station Optimization',
+                    'recommendation': f"Reallocate budget from low-performing stations to {top_station.get('station', 'top performer')}",
+                    'impact': 'High',
+                    'effort': 'Low',
+                    'expected_benefit': f"Increase efficiency by {((top_station.get('avg_visits_per_spot', 0) / bottom_station.get('avg_visits_per_spot', 1)) - 1) * 100:.0f}%"
+                })
+        
+        # Daypart optimization priority
+        if len(daypart_data) >= 2:
+            best_daypart = daypart_data[0]
+            worst_daypart = daypart_data[-1]
+            
+            if best_daypart.get('avg_visits_per_spot', 0) > worst_daypart.get('avg_visits_per_spot', 0) * 1.3:
+                priorities.append({
+                    'priority': 2,
+                    'area': 'Daypart Optimization',
+                    'recommendation': f"Shift budget from {worst_daypart.get('daypart', 'low-performing')} to {best_daypart.get('daypart', 'high-performing')} dayparts",
+                    'impact': 'High',
+                    'effort': 'Medium',
+                    'expected_benefit': f"Improve visit rate by {((best_daypart.get('avg_visits_per_spot', 0) / worst_daypart.get('avg_visits_per_spot', 1)) - 1) * 100:.0f}%"
+                })
+        
+        return priorities[:3]
+    
+    def save_insights_csv(self, insights: Dict[str, Any], filename: str = None) -> str:
+        """Save comprehensive insights as CSV for Power BI consumption"""
+        
+        if filename is None:
+            client_name = insights['metadata']['client_name'].replace(' ', '_').lower()
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"{client_name}_insights_{timestamp}"
+        
+        output_dir = "output/reports"
+        os.makedirs(output_dir, exist_ok=True)
+        filepath = os.path.join(output_dir, f"{filename}.csv")
+        
+        try:
+            insights_data = []
+            
+            # Station insights
+            for insight in insights.get('station_insights', []):
+                insights_data.append({
+                    'client': insights['metadata']['client_name'],
+                    'product': insight.get('product', 'DEFAULT'),  # Add product from insight or default
+                    'insight_category': 'station',
+                    'insight_type': insight.get('insight_type', 'station_analysis'),
+                    'priority': insight.get('priority', 999),
+                    'impact_level': 'High' if insight.get('priority', 999) <= 2 else 'Medium',
+                    'station': insight.get('station'),
+                    'daypart': None,
+                    'performance_tier': insight.get('performance_tier'),
+                    'opportunity_type': insight.get('opportunity_type'),
+                    'recommendation': insight.get('recommendation', ''),
+                    'expected_impact': insight.get('expected_impact', ''),
+                    'confidence': insight.get('confidence', 'Medium'),
+                    'action_type': insight.get('action_type', 'optimize'),
+                    'visit_rate': insight.get('visit_rate', 0),
+                    'total_visits': insight.get('total_visits', 0),
+                    'spots': insight.get('spots', 0),
+                    'generated_date': insights['metadata']['generation_date'][:10]
+                })
+            
+            # Daypart insights
+            for insight in insights.get('daypart_insights', []):
+                insights_data.append({
+                    'client': insights['metadata']['client_name'],
+                    'product': insight.get('product', 'DEFAULT'),  # Add product from insight or default
+                    'insight_category': 'daypart',
+                    'insight_type': insight.get('insight_type', 'daypart_analysis'),
+                    'priority': insight.get('priority', 999),
+                    'impact_level': 'High' if insight.get('priority', 999) <= 2 else 'Medium',
+                    'station': None,
+                    'daypart': insight.get('daypart'),
+                    'performance_tier': None,
+                    'opportunity_type': insight.get('efficiency_rating'),
+                    'recommendation': insight.get('recommendation', ''),
+                    'expected_impact': insight.get('expected_impact', ''),
+                    'confidence': insight.get('confidence', 'Medium'),
+                    'action_type': insight.get('action_type', 'optimize'),
+                    'visit_rate': insight.get('visit_rate', 0),
+                    'total_visits': insight.get('total_visits', 0),
+                    'spots': insight.get('spots', 0),
+                    'generated_date': insights['metadata']['generation_date'][:10]
+                })
+            
+            # Station+Daypart combination insights
+            for insight in insights.get('station_daypart_insights', []):
+                insights_data.append({
+                    'client': insights['metadata']['client_name'],
+                    'product': insight.get('product', 'DEFAULT'),  # Add product from insight or default
+                    'insight_category': 'combination',
+                    'insight_type': insight.get('insight_type', 'combination_analysis'),
+                    'priority': insight.get('priority', 999),
+                    'impact_level': 'High' if insight.get('priority', 999) <= 2 else 'Medium',
+                    'station': insight.get('station'),
+                    'daypart': insight.get('daypart'),
+                    'performance_tier': insight.get('combo_tier'),
+                    'opportunity_type': insight.get('scaling_priority'),
+                    'recommendation': insight.get('recommendation', ''),
+                    'expected_impact': insight.get('expected_impact', ''),
+                    'confidence': insight.get('confidence', 'Medium'),
+                    'action_type': insight.get('action_type', 'optimize'),
+                    'visit_rate': insight.get('visit_rate', 0),
+                    'total_visits': insight.get('total_visits', 0),
+                    'spots': insight.get('spots', 0),
+                    'generated_date': insights['metadata']['generation_date'][:10]
+                })
+            
+            # Performance quadrant insights
+            quadrants = insights.get('performance_quadrants', {})
+            for quadrant_name, quadrant_data in quadrants.items():
+                for item in quadrant_data:
+                    insights_data.append({
+                        'client': insights['metadata']['client_name'],
+                        'product': item.get('product', 'DEFAULT'),  # Add product from item or default
+                        'insight_category': 'quadrant',
+                        'insight_type': 'quadrant_analysis',
+                        'priority': 1 if quadrant_name == 'high_volume_high_efficiency' else 2,
+                        'impact_level': 'High' if quadrant_name in ['high_volume_high_efficiency', 'low_volume_high_efficiency'] else 'Medium',
+                        'station': item.get('station'),
+                        'daypart': None,
+                        'performance_tier': item.get('quadrant'),
+                        'opportunity_type': quadrant_name.replace('_', ' ').title(),
+                        'recommendation': item.get('action', ''),
+                        'expected_impact': f"Volume: {item.get('volume', 0)}, Efficiency: {item.get('efficiency', 0):.1f}",
+                        'confidence': 'High',
+                        'action_type': item.get('action', '').lower().replace(' ', '_'),
+                        'visit_rate': item.get('efficiency', 0),
+                        'total_visits': item.get('volume', 0),
+                        'spots': item.get('spots', 0),
+                        'generated_date': insights['metadata']['generation_date'][:10]
+                    })
+            
+            # Opportunity matrix insights
+            for opportunity in insights.get('opportunity_matrix', []):
+                insights_data.append({
+                    'client': insights['metadata']['client_name'],
+                    'product': opportunity.get('product', 'DEFAULT'),  # Add product from opportunity or default
+                    'insight_category': 'opportunity',
+                    'insight_type': 'reallocation_opportunity',
+                    'priority': opportunity.get('priority', 999),
+                    'impact_level': 'High' if opportunity.get('priority', 999) <= 3 else 'Medium',
+                    'station': f"{opportunity.get('from_station')} → {opportunity.get('to_station')}",
+                    'daypart': None,
+                    'performance_tier': None,
+                    'opportunity_type': 'Budget Reallocation',
+                    'recommendation': f"Move {opportunity.get('potential_spots_to_move', 0)} spots from {opportunity.get('from_station')} to {opportunity.get('to_station')}",
+                    'expected_impact': f"Gain {opportunity.get('projected_visit_gain', 0)} visits",
+                    'confidence': opportunity.get('confidence', 'Medium'),
+                    'action_type': 'budget_reallocation',
+                    'visit_rate': opportunity.get('efficiency_gain', 0),
+                    'total_visits': opportunity.get('projected_visit_gain', 0),
+                    'spots': opportunity.get('potential_spots_to_move', 0),
+                    'generated_date': insights['metadata']['generation_date'][:10]
+                })
+            
+            # Write CSV
+            if insights_data:
+                fieldnames = ['client', 'product', 'insight_category', 'insight_type', 'priority', 'impact_level', 
+                             'station', 'daypart', 'performance_tier', 'opportunity_type', 'recommendation', 
+                             'expected_impact', 'confidence', 'action_type', 'visit_rate', 'total_visits', 
+                             'spots', 'generated_date']
+                
+                with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(insights_data)
+                
+                print(f"📊 Enhanced insights CSV saved to: {filepath}")
+                print(f"📝 Exported {len(insights_data)} comprehensive insights to CSV")
+                return filepath
+            else:
+                print("⚠️  No insights available for CSV export")
+                return ""
+                
+        except Exception as e:
+            print(f"❌ Error saving enhanced insights CSV: {e}")
+            return ""
+    
+    def _fallback_enhanced_insights(self, kpis: Dict[str, Any], client_name: str = None) -> Dict[str, Any]:
+        """Fallback insights when AI generation fails"""
         return {
             'metadata': {
                 'generation_date': datetime.now().isoformat(),
                 'ai_model': 'fallback',
                 'client_name': client_name,
-                'analysis_confidence': 0.7
+                'analysis_confidence': 0.7,
+                'total_insights_generated': 1
             },
-            'descriptive_analysis': 'Campaign performance analysis unavailable due to AI service interruption.',
-            'prescriptive_recommendations': self._fallback_structured_insights(),
-            'executive_summary': f'TV campaign analysis for {client_name or "client"} completed with limited AI insights.',
-            'key_findings': ['AI analysis temporarily unavailable'],
-            'optimization_priorities': []
+            'executive_summary': f'Enhanced TV campaign analysis for {client_name or "client"} completed with limited AI insights.',
+            'key_findings': ['Enhanced AI analysis temporarily unavailable'],
+            'optimization_priorities': [],
+            'station_insights': [],
+            'daypart_insights': [],
+            'station_daypart_insights': [],
+            'performance_quadrants': {},
+            'opportunity_matrix': [],
+            'predictive_recommendations': [],
+            'budget_reallocation_analysis': {},
+            'prescriptive_recommendations': {
+                'optimization_recommendations': [],
+                'key_findings': []
+            }
         }
+    
+    # Template methods for AI prompts
+    def _get_station_insight_template(self) -> str:
+        return """Analyze each station's performance individually and provide specific insights."""
+    
+    def _get_daypart_insight_template(self) -> str:
+        return """Analyze each daypart's efficiency and provide optimization recommendations."""
+    
+    def _get_combination_insight_template(self) -> str:
+        return """Analyze station+daypart combinations for scaling opportunities."""
+    
+    def _get_performance_assessment_template(self) -> str:
+        return """Assess overall campaign performance against industry benchmarks."""
+    
+    def _get_opportunity_analysis_template(self) -> str:
+        return """Identify specific opportunities for budget reallocation and optimization."""
 
 
 # Test the AI Insights Engine
 if __name__ == "__main__":
     print("🧪 Testing AI Insights Engine...")
-    print("=" * 50)
+    print("=" * 60)
     
     try:
         import sys
@@ -738,7 +1170,7 @@ if __name__ == "__main__":
             clients = db.get_available_clients(30)
             if clients:
                 client = clients[0]
-                print(f"📊 Testing AI insights for client: {client}")
+                print(f"📊 Testing insights for client: {client}")
                 
                 df = db.get_campaign_data(client=client, days=30)
                 if not df.is_empty():
@@ -748,8 +1180,56 @@ if __name__ == "__main__":
                     insight_generator = InsightGenerator()
                     insights = insight_generator.generate_comprehensive_insights(kpis, client)
                     
-                    print(f"\n✅ AI insights test completed successfully!")
-                    print(f"Generated insights: {list(insights.keys())}")
+                    print(f"\n✅ AI insights test completed!")
+                    print(f"📊 Insight categories generated: {list(insights.keys())}")
+                    print(f"📈 Total insights: {insights['metadata']['total_insights_generated']}")
+                    
+                    # Test CSV export
+                    csv_path = insight_generator.save_insights_csv(insights)
+                    if csv_path:
+                        print(f"📁 CSV saved for Power BI: {csv_path}")
+                    
+                else:
+                    print("❌ No campaign data available for testing")
+            else:
+                print("❌ No clients available for testing")
+                
+    except ImportError as e:
+        print(f"❌ Cannot import required modules: {e}")
+    except Exception as e:
+        print(f"❌ Test failed: {e}")
+    print("🧪 Testing Enhanced AI Insights Engine...")
+    print("=" * 60)
+    
+    try:
+        import sys
+        sys.path.append('.')
+        from src.database import DatabaseManager
+        from src.kpi_calculator import KPICalculator
+        
+        with DatabaseManager() as db:
+            clients = db.get_available_clients(30)
+            if clients:
+                client = clients[0]
+                print(f"📊 Testing enhanced insights for client: {client}")
+                
+                df = db.get_campaign_data(client=client, days=30)
+                if not df.is_empty():
+                    calculator = KPICalculator()
+                    kpis = calculator.calculate_campaign_kpis(df)
+                    
+                    insight_generator = InsightGenerator()
+                    insights = insight_generator.generate_comprehensive_insights(kpis, client)
+                    
+                    print(f"\n✅ Enhanced insights test completed!")
+                    print(f"📊 Insight categories generated: {list(insights.keys())}")
+                    print(f"📈 Total insights: {insights['metadata']['total_insights_generated']}")
+                    
+                    # Test CSV export
+                    csv_path = insight_generator.save_insights_csv(insights)
+                    if csv_path:
+                        print(f"📁 CSV saved for Power BI: {csv_path}")
+                    
                 else:
                     print("❌ No campaign data available for testing")
             else:

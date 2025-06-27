@@ -1,6 +1,0 @@
-client,product,insight_type,priority,impact_level,area,station,daypart,recommendation,expected_impact,confidence,action_type,generated_date
-OPOS,DEFAULT,optimization,1,High,Station Optimization,LMN,,Increase spend on LMN due to high visit generation per spot.,Increase visits by 1500,95%,reallocate_budget,2025-06-26
-OPOS,DEFAULT,optimization,2,Medium,Daypart Optimization,,WK,Prioritize WK daypart due to its high visit generation per spot.,Increase visits by 500,80%,daypart_shift,2025-06-26
-OPOS,DEFAULT,optimization,3,Medium,Combination Scaling,LIFE,DA,Scale LIFE + DA combination to maximize visit generation.,Increase visits by 400,75%,scale_combination,2025-06-26
-OPOS,DEFAULT,finding,1,High,efficiency,LMN,,LMN shows the highest efficiency in visit generation per spot.,N/A,N/A,insight,2025-06-26
-OPOS,DEFAULT,finding,2,Medium,efficiency,,WK,WK daypart demonstrates strong performance in visit generation per spot.,N/A,N/A,insight,2025-06-26

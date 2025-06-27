@@ -1,0 +1,21 @@
+client,station,daypart,combination,total_visits,total_spots,avg_visits_per_spot,total_cost,combo_tier,scaling_priority,confidence_level,ai_recommendation,expected_impact,action_type,priority,generated_date
+OPOS,LMN,WK,LMN + WK,3460,75,46.13333333333333,32400.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,LMN,EF,LMN + EF,3123,69,45.26086956521739,31050.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,LIFE,DA,LIFE + DA,4143,92,45.03260869565217,46000.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,TLC,EM,TLC + EM,1762,42,41.95238095238095,28400.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,WE,PR,WE + PR,1211,29,41.758620689655174,30450.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,WE,EF,WE + EF,720,18,40.0,10425.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,AEN,DA,AEN + DA,548,15,36.53333333333333,10500.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,OXY,EM,OXY + EM,565,16,35.3125,11200.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,USA,DA,USA + DA,207,6,34.5,9000.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,SUNDA,PR,SUNDA + PR,441,13,33.92307692307692,5850.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,AEN,EF,AEN + EF,260,8,32.5,9600.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,GAME,PR,GAME + PR,559,19,29.42105263157895,18050.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,LMN,PR,LMN + PR,649,25,25.96,12450.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,GAME,ON,GAME + ON,261,20,13.05,3500.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,AMC,ON,AMC + ON,761,61,12.475409836065573,6100.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,TBS,ON,TBS + ON,946,83,11.397590361445783,10075.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,WE,ON,WE + ON,801,74,10.824324324324325,5550.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,HALL,ON,HALL + ON,162,17,9.529411764705882,3825.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,IDISC,ON,IDISC + ON,473,50,9.46,14750.00,Standard,Low,Low,,,monitor,999,2025-06-27
+OPOS,TNT,ON,TNT + ON,197,21,9.380952380952381,3150.00,Standard,Low,Low,,,monitor,999,2025-06-27
