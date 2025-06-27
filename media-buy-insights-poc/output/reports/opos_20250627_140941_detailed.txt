@@ -1,0 +1,109 @@
+================================================================================
+🎯 DETAILED CAMPAIGN ANALYSIS REPORT
+================================================================================
+
+📊 CLIENT: OPOS
+📅 Period: 2025-05-28 18:33:00 to 2025-06-26 05:14:00
+📺 Spots Analyzed: 834
+🎯 Data Quality: 100% | AI Confidence: 93%
+🤖 Total Insights Generated: 68
+
+============================================================
+📋 EXECUTIVE SUMMARY
+============================================================
+
+TV campaign generated $81,770 in revenue through 1,751 orders from 21,514 website visits across 834 TV spots.
+
+🔍 KEY FINDINGS:
+   1. Strong engagement: 25.8 visits per TV spot
+   2. Top station LMN generated 7,201 visits from 168 spots
+   3. WK daypart shows highest efficiency at 46.1 visits per spot
+
+============================================================
+📈 CAMPAIGN PERFORMANCE METRICS
+============================================================
+
+💰 CAMPAIGN TOTALS:
+   Total Spend: $325,325.00
+   Website Visits: 21,514
+   Orders: 1,751
+   Revenue: $81,769.68
+   Impressions: 13,337
+
+📊 EFFICIENCY METRICS:
+   ROAS: 0.25x
+   CPM: $24392.67
+   Cost per Order: $185.79
+   Cost per Visit: $15.12
+   Visits per Spot: 25.80
+
+============================================================
+📺 STATION ANALYSIS
+============================================================
+
+🎯 STATION-SPECIFIC AI INSIGHTS:
+
+   • LMN (High Performer):
+     Type: Scale Winner
+     Recommendation: Scale LMN immediately - proven high-volume, high-efficiency performer
+
+   • LIFE (High Performer):
+     Type: Scale Winner
+     Recommendation: Scale LIFE immediately - proven high-volume, high-efficiency performer
+
+   • WE (Above Average):
+     Type: Scale Winner
+     Recommendation: Scale WE immediately - proven high-volume, high-efficiency performer
+
+   • TLC (High Performer):
+     Type: Scale Winner
+     Recommendation: Scale TLC immediately - proven high-volume, high-efficiency performer
+
+   • TBS (Below Average):
+     Type: Monitor
+     Recommendation: Monitor TBS performance and test optimization strategies
+
+============================================================
+🎯 PERFORMANCE QUADRANTS
+============================================================
+
+🔸 CHAMPIONS (Scale These):
+   • LMN: 7,201 visits, 42.9 avg/spot → Scale immediately
+   • LIFE: 4,143 visits, 45.0 avg/spot → Scale immediately
+   • WE: 2,670 visits, 22.2 avg/spot → Scale immediately
+
+🔸 HIDDEN GEMS (Test These):
+   • OXY: 565 visits, 35.3 avg/spot → Test scaling
+   • SUNDA: 441 visits, 33.9 avg/spot → Test scaling
+
+🔸 INEFFICIENT GIANTS (Optimize These):
+   • TBS: 971 visits, 11.4 avg/spot → Optimize or reduce
+   • AMC: 761 visits, 12.5 avg/spot → Optimize or reduce
+
+🔸 UNDERPERFORMERS (Consider Eliminating):
+   • IDISC: 473 visits, 9.5 avg/spot → Consider eliminating
+   • USA: 263 visits, 9.7 avg/spot → Consider eliminating
+   • HALL: 244 visits, 7.9 avg/spot → Consider eliminating
+
+============================================================
+💡 BUDGET REALLOCATION OPPORTUNITIES
+============================================================
+
+   1. BRAV -> LIFE
+      Efficiency Gain: +39.0 visits/spot
+      Projected Impact: +390 visits
+      Confidence: High
+
+   2. FOOD -> LIFE
+      Efficiency Gain: +42.3 visits/spot
+      Projected Impact: +507 visits
+      Confidence: High
+
+   3. BRAV -> LMN
+      Efficiency Gain: +36.9 visits/spot
+      Projected Impact: +368 visits
+      Confidence: High
+
+================================================================================
+END OF REPORT
+================================================================================

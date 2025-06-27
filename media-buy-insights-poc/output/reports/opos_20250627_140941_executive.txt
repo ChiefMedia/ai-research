@@ -1,0 +1,22 @@
+EXECUTIVE SUMMARY - OPOS
+======================================================================
+
+Analysis Period: 2025-05-28 18:33:00 to 2025-06-26 05:14:00
+Spots Analyzed: 834
+Data Quality: 100%
+AI Insights Generated: 68
+
+EXECUTIVE SUMMARY:
+TV campaign generated $81,770 in revenue through 1,751 orders from 21,514 website visits across 834 TV spots.
+
+KEY FINDINGS:
+1. Strong engagement: 25.8 visits per TV spot
+2. Top station LMN generated 7,201 visits from 168 spots
+3. WK daypart shows highest efficiency at 46.1 visits per spot
+
+TOP OPTIMIZATION OPPORTUNITIES:
+1. BRAV -> LIFE: +390 visits (High confidence)
+2. FOOD -> LIFE: +507 visits (High confidence)
+3. BRAV -> LMN: +368 visits (High confidence)
+
+Generated: 2025-06-27T14:09:41.739553
