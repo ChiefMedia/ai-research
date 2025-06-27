@@ -1,11 +1,12 @@
 """
 Report Generator - Format campaign insights for executive consumption
 Creates console, file, and structured outputs from KPI and AI analysis
-Enhanced version that automatically saves detailed insights as formatted reports
+Enhanced version with CSV export capability for Power BI integration
 """
 
 import json
 import os
+import csv
 from datetime import datetime
 from typing import Dict, Any
 
@@ -57,12 +58,109 @@ class ReportGenerator:
             },
             'ai_analysis': {
                 'descriptive_analysis': insights.get('descriptive_analysis', 'Analysis not available'),
-                'prescriptive_recommendations': insights.get('prescriptive_recommendations', 'Recommendations not available'),
+                'prescriptive_recommendations': insights.get('prescriptive_recommendations', {}),
                 'model_used': insights.get('metadata', {}).get('ai_model', 'Unknown')
             }
         }
         
         return report
+    
+    def save_ai_insights_csv(self, report: Dict[str, Any], filename: str = None) -> str:
+        """Save AI insights as CSV for Power BI import"""
+        
+        if filename is None:
+            client_name = report['metadata']['client_name'].replace(' ', '_').lower()
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"{client_name}_ai_insights_{timestamp}"
+        
+        filepath = os.path.join(self.output_dir, f"{filename}.csv")
+        
+        try:
+            ai_analysis = report.get('ai_analysis', {})
+            prescriptive_data = ai_analysis.get('prescriptive_recommendations', {})
+            
+            # Extract structured insights from the AI analysis
+            insights_data = []
+            
+            # Process optimization recommendations
+            if isinstance(prescriptive_data, dict) and 'optimization_recommendations' in prescriptive_data:
+                for rec in prescriptive_data['optimization_recommendations']:
+                    insights_data.append({
+                        'client': report['metadata']['client_name'],
+                        'product': 'DEFAULT',  # Add product logic if needed
+                        'insight_type': 'optimization',
+                        'priority': rec.get('priority', 999),
+                        'impact_level': rec.get('impact_level', 'Medium'),
+                        'area': rec.get('area', 'Unknown'),
+                        'station': rec.get('station'),
+                        'daypart': rec.get('daypart'),
+                        'recommendation': rec.get('recommendation', ''),
+                        'expected_impact': rec.get('expected_impact', ''),
+                        'confidence': rec.get('confidence', 'Unknown'),
+                        'action_type': rec.get('action_type', 'optimize'),
+                        'generated_date': report['metadata']['generated_at'][:10]  # Just date part
+                    })
+            
+            # Process key findings
+            if isinstance(prescriptive_data, dict) and 'key_findings' in prescriptive_data:
+                for finding in prescriptive_data['key_findings']:
+                    insights_data.append({
+                        'client': report['metadata']['client_name'],
+                        'product': 'DEFAULT',
+                        'insight_type': 'finding',
+                        'priority': finding.get('priority', 999),
+                        'impact_level': finding.get('impact_level', 'Medium'),
+                        'area': finding.get('finding_type', 'Analysis'),
+                        'station': finding.get('station'),
+                        'daypart': finding.get('daypart'),
+                        'recommendation': finding.get('description', ''),
+                        'expected_impact': 'N/A',
+                        'confidence': 'N/A',
+                        'action_type': 'insight',
+                        'generated_date': report['metadata']['generated_at'][:10]
+                    })
+            
+            # Fallback: If no structured data, create basic insights from optimization_priorities
+            if not insights_data:
+                optimization_priorities = report['optimization_insights'].get('optimization_priorities', [])
+                for i, priority in enumerate(optimization_priorities, 1):
+                    insights_data.append({
+                        'client': report['metadata']['client_name'],
+                        'product': 'DEFAULT',
+                        'insight_type': 'optimization',
+                        'priority': i,
+                        'impact_level': priority.get('impact', 'Medium'),
+                        'area': priority.get('area', 'Unknown'),
+                        'station': None,
+                        'daypart': None,
+                        'recommendation': priority.get('recommendation', ''),
+                        'expected_impact': 'Manual analysis required',
+                        'confidence': 'N/A',
+                        'action_type': 'optimize',
+                        'generated_date': report['metadata']['generated_at'][:10]
+                    })
+            
+            # Write CSV
+            if insights_data:
+                fieldnames = ['client', 'product', 'insight_type', 'priority', 'impact_level', 
+                             'area', 'station', 'daypart', 'recommendation', 'expected_impact', 
+                             'confidence', 'action_type', 'generated_date']
+                
+                with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(insights_data)
+                
+                print(f"📊 AI insights CSV saved to: {filepath}")
+                print(f"📝 Exported {len(insights_data)} insights to CSV")
+                return filepath
+            else:
+                print("⚠️  No structured insights available for CSV export")
+                return ""
+                
+        except Exception as e:
+            print(f"❌ Error saving AI insights CSV: {e}")
+            return ""
     
     def print_to_console(self, report: Dict[str, Any]):
         """Print executive-friendly report to console"""
@@ -144,41 +242,62 @@ class ReportGenerator:
         stations = optimization.get('station_performance', [])
         if stations:
             print(f"\n📺 TOP STATIONS (by total visits):")
-            for i, station in enumerate(stations[:5], 1):
+            for i, station in enumerate(stations[:10], 1):
                 visits = station.get('total_visits', 0)
                 spots = station.get('spots', 0)
                 avg_visits = station.get('avg_visits_per_spot', 0)
-                print(f"   {i}. {station.get('station', 'Unknown')}: {visits:,} visits ({spots} spots, {avg_visits:.1f} avg/spot)")
+                print(f"   {i:2d}. {station.get('station', 'Unknown')}: {visits:,} visits ({spots} spots, {avg_visits:.1f} avg/spot)")
         
         # Top Dayparts
         dayparts = optimization.get('daypart_performance', [])
         if dayparts:
             print(f"\n⏰ TOP DAYPARTS (by efficiency):")
-            for i, daypart in enumerate(dayparts[:5], 1):
+            for i, daypart in enumerate(dayparts, 1):
                 dp_name = daypart.get('daypart', 'Unknown')
-                efficiency = daypart.get('avg_visits_per_spot', 0)
+                efficiency_val = daypart.get('avg_visits_per_spot', 0)
                 spots = daypart.get('spots', 0)
-                print(f"   {i}. {dp_name}: {efficiency:.2f} visits/spot ({spots} spots)")
+                visits = daypart.get('total_visits', 0)
+                print(f"   {i}. {dp_name}: {efficiency_val:.2f} visits/spot ({visits:,} visits from {spots} spots)")
         
         # Best Combinations
         combos = optimization.get('station_daypart_combinations', [])
         if combos:
             print(f"\n🎯 BEST STATION + DAYPART COMBINATIONS:")
-            for i, combo in enumerate(combos[:3], 1):
+            for i, combo in enumerate(combos[:10], 1):
                 station = combo.get('station', 'Unknown')
                 daypart = combo.get('daypart', 'Unknown')
-                efficiency = combo.get('avg_visits_per_spot', 0)
+                efficiency_val = combo.get('avg_visits_per_spot', 0)
                 spots = combo.get('spots', 0)
-                print(f"   {i}. {station} + {daypart}: {efficiency:.2f} visits/spot ({spots} spots)")
+                visits = combo.get('total_visits', 0)
+                print(f"   {i:2d}. {station} + {daypart}: {efficiency_val:.2f} visits/spot ({visits:,} visits from {spots} spots)")
         
-        # AI Recommendations
+        # AI Analysis
         print(f"\n" + "="*60)
-        print("🤖 AI-POWERED OPTIMIZATION RECOMMENDATIONS")
+        print("🤖 AI ANALYSIS & INSIGHTS")
         print("="*60)
         
+        # Descriptive Analysis
+        ai_analysis = report['ai_analysis']
+        descriptive = ai_analysis.get('descriptive_analysis', '')
+        if descriptive and descriptive != 'Analysis not available':
+            print(f"\n📊 PERFORMANCE ANALYSIS:")
+            analysis_lines = descriptive.split('. ')
+            for line in analysis_lines:
+                if line.strip():
+                    print(f"   • {line.strip()}.")
+        
+        # AI Recommendations - Handle both string and structured formats
         ai_recommendations = optimization.get('ai_recommendations', '')
-        if ai_recommendations and ai_recommendations != 'Recommendations not available':
-            # Split recommendations into readable sections
+        if isinstance(ai_recommendations, dict):
+            # Structured format
+            if 'optimization_recommendations' in ai_recommendations:
+                print(f"\n🎯 AI-POWERED OPTIMIZATION RECOMMENDATIONS:")
+                for rec in ai_recommendations['optimization_recommendations']:
+                    impact_emoji = "🔥" if rec.get('impact_level') == 'High' else "📈"
+                    print(f"   • {rec.get('area', 'Unknown')}: {rec.get('recommendation', 'Unknown')} {impact_emoji}")
+        elif isinstance(ai_recommendations, str) and ai_recommendations != 'Recommendations not available':
+            # String format (fallback)
+            print(f"\n🎯 AI-POWERED OPTIMIZATION RECOMMENDATIONS:")
             recommendations = ai_recommendations.split('\n')
             for rec in recommendations:
                 if rec.strip():
@@ -187,14 +306,25 @@ class ReportGenerator:
         # Optimization Priorities
         priorities = optimization.get('optimization_priorities', [])
         if priorities:
-            print(f"\n🎯 IMMEDIATE ACTION ITEMS:")
+            print(f"\n⚡ IMMEDIATE ACTION ITEMS:")
             for priority in priorities:
                 impact_emoji = "🔥" if priority.get('impact') == 'High' else "📈" if priority.get('impact') == 'Medium' else "📊"
                 effort = priority.get('effort', 'Unknown')
-                print(f"   • {priority.get('recommendation', 'Unknown')} {impact_emoji} (Effort: {effort})")
+                area = priority.get('area', 'Unknown')
+                rec = priority.get('recommendation', 'Unknown')
+                print(f"   • {area}: {rec} {impact_emoji} (Impact: {priority.get('impact', 'Unknown')}, Effort: {effort})")
+        
+        # Technical Details
+        print(f"\n" + "="*60)
+        print("📋 TECHNICAL DETAILS")
+        print("="*60)
+        print(f"AI Model: {ai_analysis.get('model_used', 'Unknown')}")
+        print(f"Analysis Confidence: {metadata['ai_confidence']:.0%}")
+        print(f"Data Quality Score: {metadata['data_quality_score']:.1f}%")
+        print(f"Generated: {metadata['generated_at']}")
         
         print("\n" + "="*80)
-        print(f"📊 Report generated at {metadata['generated_at']}")
+        print("END OF REPORT")
         print("="*80)
     
     def save_detailed_report(self, report: Dict[str, Any], filename: str = None) -> str:
@@ -287,7 +417,7 @@ class ReportGenerator:
                 stations = optimization.get('station_performance', [])
                 if stations:
                     file.write(f"\n📺 TOP STATIONS (by total visits):\n")
-                    for i, station in enumerate(stations[:10], 1):  # Show top 10 in detailed report
+                    for i, station in enumerate(stations[:10], 1):
                         visits = station.get('total_visits', 0)
                         spots = station.get('spots', 0)
                         avg_visits = station.get('avg_visits_per_spot', 0)
@@ -297,7 +427,7 @@ class ReportGenerator:
                 dayparts = optimization.get('daypart_performance', [])
                 if dayparts:
                     file.write(f"\n⏰ TOP DAYPARTS (by efficiency):\n")
-                    for i, daypart in enumerate(dayparts, 1):  # Show all dayparts in detailed report
+                    for i, daypart in enumerate(dayparts, 1):
                         dp_name = daypart.get('daypart', 'Unknown')
                         efficiency_val = daypart.get('avg_visits_per_spot', 0)
                         spots = daypart.get('spots', 0)
@@ -308,7 +438,7 @@ class ReportGenerator:
                 combos = optimization.get('station_daypart_combinations', [])
                 if combos:
                     file.write(f"\n🎯 BEST STATION + DAYPART COMBINATIONS:\n")
-                    for i, combo in enumerate(combos[:10], 1):  # Show top 10 combinations
+                    for i, combo in enumerate(combos[:10], 1):
                         station = combo.get('station', 'Unknown')
                         daypart = combo.get('daypart', 'Unknown')
                         efficiency_val = combo.get('avg_visits_per_spot', 0)
@@ -326,7 +456,6 @@ class ReportGenerator:
                 descriptive = ai_analysis.get('descriptive_analysis', '')
                 if descriptive and descriptive != 'Analysis not available':
                     file.write(f"\n📊 PERFORMANCE ANALYSIS:\n")
-                    # Format the descriptive analysis nicely
                     analysis_lines = descriptive.split('. ')
                     for line in analysis_lines:
                         if line.strip():
@@ -334,9 +463,15 @@ class ReportGenerator:
                 
                 # AI Recommendations
                 ai_recommendations = optimization.get('ai_recommendations', '')
-                if ai_recommendations and ai_recommendations != 'Recommendations not available':
+                if isinstance(ai_recommendations, dict):
+                    # Structured format
+                    if 'optimization_recommendations' in ai_recommendations:
+                        file.write(f"\n🎯 AI-POWERED OPTIMIZATION RECOMMENDATIONS:\n")
+                        for rec in ai_recommendations['optimization_recommendations']:
+                            impact_emoji = "🔥" if rec.get('impact_level') == 'High' else "📈"
+                            file.write(f"   • {rec.get('area', 'Unknown')}: {rec.get('recommendation', 'Unknown')} {impact_emoji}\n")
+                elif isinstance(ai_recommendations, str) and ai_recommendations != 'Recommendations not available':
                     file.write(f"\n🎯 AI-POWERED OPTIMIZATION RECOMMENDATIONS:\n")
-                    # Split recommendations into readable sections
                     recommendations = ai_recommendations.split('\n')
                     for rec in recommendations:
                         if rec.strip():
@@ -452,13 +587,24 @@ class ReportGenerator:
         file_paths = {}
         
         # Save detailed report (mirrors console output)
-        file_paths['detailed'] = self.save_detailed_report(report, f"{base_filename}_detailed")
+        detailed_path = self.save_detailed_report(report, f"{base_filename}_detailed")
+        if detailed_path:
+            file_paths['detailed_analysis'] = detailed_path
         
         # Save executive summary
-        file_paths['executive'] = self.save_executive_summary(report, f"{base_filename}_executive")
+        exec_path = self.save_executive_summary(report, f"{base_filename}_executive")
+        if exec_path:
+            file_paths['executive_summary'] = exec_path
         
         # Save raw data JSON
-        file_paths['json'] = self.save_to_file(report, f"{base_filename}_data")
+        json_path = self.save_to_file(report, f"{base_filename}_data")
+        if json_path:
+            file_paths['json_data'] = json_path
+        
+        # Save AI insights CSV
+        csv_path = self.save_ai_insights_csv(report, f"{base_filename}_ai_insights")
+        if csv_path:
+            file_paths['ai_insights_csv'] = csv_path
         
         return file_paths
     

@@ -1,0 +1,8 @@
+client,product,insight_type,priority,impact_level,area,station,daypart,recommendation,expected_impact,confidence,action_type,generated_date
+OPOS,DEFAULT,optimization,1,High,Station Optimization,LMN,,Reallocate budget to LMN due to its high visit per spot ratio.,Increase overall visits by 15%,95%,reallocate_budget,2025-06-26
+OPOS,DEFAULT,optimization,2,Medium,Daypart Optimization,,WK,Increase spend on WK daypart to capitalize on its strong performance.,Improve visit rate by 10%,80%,daypart_shift,2025-06-26
+OPOS,DEFAULT,optimization,3,Medium,Station Optimization,TBS,,Reduce spend on TBS due to its low visit per spot ratio.,Reduce wasted spend by 5%,75%,reduce_spend,2025-06-26
+OPOS,DEFAULT,optimization,4,Medium,Combination Scaling,WE,PR,Explore scaling WE + PR combination given its strong performance.,Increase visits by 300+,70%,scale_combination,2025-06-26
+OPOS,DEFAULT,finding,1,High,efficiency,LMN,,LMN is the most efficient station with 42.4 visits per spot.,N/A,N/A,insight,2025-06-26
+OPOS,DEFAULT,finding,2,High,efficiency,,WK,WK is the most efficient daypart with 46.1 visits per spot.,N/A,N/A,insight,2025-06-26
+OPOS,DEFAULT,finding,3,Medium,inefficiency,TBS,,TBS is underperforming with only 10.5 visits per spot.,N/A,N/A,insight,2025-06-26

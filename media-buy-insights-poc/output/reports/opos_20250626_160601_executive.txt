@@ -1,0 +1,21 @@
+EXECUTIVE SUMMARY - OPOS
+============================================================
+
+Analysis Period: 2025-05-27 20:19:00 to 2025-06-23 05:13:00
+Spots Analyzed: 825
+Data Quality: 100%
+
+SUMMARY:
+Our TV campaign successfully drove $79,910 in revenue through 1,699 orders generated from 20,645 website visits originating from 825 TV spots. While a solid foundation, we need to compare these initial results against projected ROI to determine if the campaign is on track to meet or exceed revenue targets.
+
+KEY FINDINGS:
+1. Excellent engagement: 25.0 visits per TV spot
+2. Top station LMN generated 6,954 visits from 164 spots
+3. WK daypart shows highest efficiency at 46.1 visits per spot
+4. Best combination: LMN + WK averaging 46.1 visits per spot
+
+IMMEDIATE ACTION ITEMS:
+• Reallocate budget from low-performing stations to LMN (Impact: High)
+• Shift budget from LF to WK dayparts (Impact: High)
+
+Generated: 2025-06-26T16:06:01.324582
