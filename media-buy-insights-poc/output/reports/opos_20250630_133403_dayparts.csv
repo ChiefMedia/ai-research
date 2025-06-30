@@ -1,8 +1,0 @@
-client,daypart,total_visits,total_spots,avg_visits_per_spot,total_cost,cpm,efficiency_rating,recommendation_priority,ai_recommendation,confidence,action_type,priority,generated_date
-OPOS,WK,3153,68,46.36764705882353,29250.00,,Fair - Trending Up,Low - Monitor,Monitor WK trends - improving performance,High,monitor_daypart,3,2025-06-30
-OPOS,DA,4412,101,43.68316831683168,58900.00,,Fair - Trending Up,Low - Monitor,Monitor DA trends - improving performance,High,monitor_daypart,3,2025-06-30
-OPOS,EF,3518,81,43.4320987654321,42825.00,,Fair - Trending Up,Low - Monitor,Monitor EF trends - improving performance,High,monitor_daypart,3,2025-06-30
-OPOS,EM,1908,48,39.75,32350.00,,Fair - Trending Up,Low - Monitor,Monitor EM trends - improving performance,High,monitor_daypart,3,2025-06-30
-OPOS,PR,2587,76,34.03947368421053,57700.00,,Fair - Trending Up,Low - Monitor,Monitor PR trends - improving performance,High,monitor_daypart,3,2025-06-30
-OPOS,ON,3371,341,9.885630498533724,53675.00,,Fair - Trending Up,Low - Monitor,Monitor ON trends - improving performance,High,monitor_daypart,3,2025-06-30
-OPOS,LF,66,11,6.0,4400.00,,Fair - Trending Up,Low - Monitor,Monitor LF trends - improving performance,Low,monitor_daypart,3,2025-06-30
