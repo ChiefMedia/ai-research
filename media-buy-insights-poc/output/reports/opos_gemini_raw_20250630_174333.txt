@@ -1,0 +1,89 @@
+Gemini Raw Response - OPOS
+Generated: 2025-06-30T17:43:33.658642
+Length: 3190 characters
+============================================================
+
+```json
+{
+  "executive_summary": {
+    "summary": "The campaign shows strong performance in several stations and dayparts, but ON and LF are significantly underperforming. Reallocating budget from underperforming areas to high-efficiency stations and dayparts can improve overall ROAS.",
+    "confidence": "High",
+    "urgency": "High"
+  },
+  "scaling_opportunities": [
+    {
+      "priority": 1,
+      "entity": "LIFE",
+      "entity_type": "station",
+      "action_type": "scale_up",
+      "recommendation": "Increase spots on LIFE by 20, capitalizing on its high efficiency.",
+      "projected_impact": "910 more visits",
+      "confidence": "High",
+      "business_rationale": "LIFE has the second-highest efficiency and a reasonable cost per spot, indicating strong potential for scaling."
+    },
+    {
+      "priority": 2,
+      "entity": "WK",
+      "entity_type": "daypart",
+      "action_type": "scale_up",
+      "recommendation": "Increase spots in WK by 15, leveraging its high efficiency.",
+      "projected_impact": "697 more visits",
+      "confidence": "High",
+      "business_rationale": "WK daypart demonstrates the highest efficiency among all dayparts, suggesting a strong return on investment for increased ad spend."
+    }
+  ],
+  "underperformers": [
+    {
+      "entity": "ON",
+      "entity_type": "daypart",
+      "issue": "Very low efficiency (9.9 visits/spot)",
+      "severity": "High",
+      "recommended_action": "reduce",
+      "business_rationale": "ON daypart has a significantly lower efficiency compared to other dayparts, indicating poor performance and a need to reduce investment."
+    },
+    {
+      "entity": "LF",
+      "entity_type": "daypart",
+      "issue": "Extremely low efficiency (6.0 visits/spot)",
+      "severity": "High",
+      "recommended_action": "eliminate",
+      "business_rationale": "LF daypart exhibits the lowest efficiency, suggesting a complete lack of effectiveness and a need to eliminate investment."
+    },
+    {
+      "entity": "TBS",
+      "entity_type": "station",
+      "issue": "Low efficiency (11.3 visits/spot) relative to cost.",
+      "severity": "Medium",
+      "recommended_action": "optimize",
+      "business_rationale": "TBS has a lower efficiency compared to other stations, suggesting a need to optimize ad placement or potentially reduce investment if optimization fails."
+    }
+  ],
+  "budget_reallocations": [
+    {
+      "from_entity": "ON",
+      "to_entity": "LIFE",
+      "spots_to_move": 15,
+      "projected_impact": "Increase visits by 682, improving overall campaign efficiency.",
+      "confidence": "High",
+      "implementation_priority": "High"
+    },
+    {
+      "from_entity": "LF",
+      "to_entity": "WK",
+      "spots_to_move": 11,
+      "projected_impact": "Increase visits by 512, significantly improving campaign efficiency.",
+      "confidence": "High",
+      "implementation_priority": "High"
+    }
+  ],
+  "trend_insights": [
+    {
+      "trend_description": "Efficiency is improving week-over-week, indicating positive momentum.",
+      "trend_direction": "positive",
+      "entity": "campaign",
+      "urgency": "Medium",
+      "recommended_response": "capitalize"
+    }
+  ]
+}
+```
