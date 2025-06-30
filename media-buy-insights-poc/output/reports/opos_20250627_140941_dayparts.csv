@@ -1,8 +1,0 @@
-client,daypart,total_visits,total_spots,avg_visits_per_spot,total_cost,cpm,efficiency_rating,recommendation_priority,ai_recommendation,confidence,action_type,priority,generated_date
-OPOS,WK,3460,75,46.13333333333333,32400.00,,Excellent,High - Scale Up,Immediately increase WK budget - highest efficiency daypart,High,increase_daypart_budget,1,2025-06-27
-OPOS,EF,4010,93,43.11827956989247,50025.00,,Excellent,High - Scale Up,Immediately increase EF budget - highest efficiency daypart,High,increase_daypart_budget,1,2025-06-27
-OPOS,DA,4923,115,42.80869565217391,68300.00,,Excellent,High - Scale Up,Immediately increase DA budget - highest efficiency daypart,High,increase_daypart_budget,1,2025-06-27
-OPOS,EM,2327,58,40.12068965517241,39600.00,,Good,High - Scale Up,Immediately increase EM budget - highest efficiency daypart,High,increase_daypart_budget,1,2025-06-27
-OPOS,PR,2860,86,33.25581395348837,66800.00,,Good,High - Scale Up,Immediately increase PR budget - highest efficiency daypart,High,increase_daypart_budget,1,2025-06-27
-OPOS,ON,3852,393,9.801526717557252,62600.00,,Fair,Medium - Optimize,Optimize ON targeting and creative rotation,High,optimize_daypart,2,2025-06-27
-OPOS,LF,82,14,5.857142857142857,5600.00,,Fair,Low - Monitor,Monitor LF trends and consider budget reallocation,Low,monitor_daypart,3,2025-06-27

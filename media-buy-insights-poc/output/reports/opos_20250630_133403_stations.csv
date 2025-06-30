@@ -1,0 +1,17 @@
+client,station,total_visits,total_spots,avg_visits_per_spot,total_cost,cpm,performance_tier,opportunity_type,ai_recommendation,confidence,action_type,priority,generated_date
+OPOS,LMN,6564,151,43.47019867549669,67700.00,,High Performer (Improving),Scale Winner,Continue scaling LMN - consistent high performer,High,scale_stable_winner,2,2025-06-30
+OPOS,LIFE,3773,83,45.45783132530121,41500.00,,High Performer (Improving),Scale Winner,Continue scaling LIFE - consistent high performer,High,scale_stable_winner,2,2025-06-30
+OPOS,WE,2262,104,21.75,38700.00,,Above Average (Improving),Scale Winner,Continue scaling WE - consistent high performer,High,scale_stable_winner,2,2025-06-30
+OPOS,TLC,1343,32,41.96875,21150.00,,High Performer (Improving),Scale Winner,Continue scaling TLC - consistent high performer,High,scale_stable_winner,2,2025-06-30
+OPOS,TBS,851,75,11.346666666666666,9275.00,,Below Average (Improving),Rising Star,Scale TBS immediately - showing strong improvement trend,High,scale_trending_winner,1,2025-06-30
+OPOS,AMC,699,55,12.709090909090909,5500.00,,Below Average (Improving),Rising Star,Scale AMC immediately - showing strong improvement trend,High,scale_trending_winner,1,2025-06-30
+OPOS,GAME,682,33,20.666666666666668,18175.00,,Above Average (Improving),Rising Star,Scale GAME immediately - showing strong improvement trend,High,scale_trending_winner,1,2025-06-30
+OPOS,AEN,617,18,34.27777777777778,15600.00,,Above Average (Improving),Rising Star,Scale AEN immediately - showing strong improvement trend,Medium,scale_trending_winner,1,2025-06-30
+OPOS,OXY,565,16,35.3125,11200.00,,High Performer (Improving),Rising Star,Scale OXY immediately - showing strong improvement trend,Medium,scale_trending_winner,1,2025-06-30
+OPOS,SUNDA,441,13,33.92307692307692,5850.00,,Above Average (Improving),Rising Star,Scale SUNDA immediately - showing strong improvement trend,Medium,scale_trending_winner,1,2025-06-30
+OPOS,IDISC,438,44,9.954545454545455,12950.00,,Unknown,Monitor,,Medium,monitor,999,2025-06-30
+OPOS,USA,240,21,11.428571428571429,13500.00,,Unknown,Monitor,,Medium,monitor,999,2025-06-30
+OPOS,HALL,215,25,8.6,7550.00,,Unknown,Monitor,,Medium,monitor,999,2025-06-30
+OPOS,TNT,153,18,8.5,2700.00,,Unknown,Monitor,,Medium,monitor,999,2025-06-30
+OPOS,BRAV,121,18,6.722222222222222,4050.00,,Unknown,Monitor,,Medium,monitor,999,2025-06-30
+OPOS,FOOD,51,20,2.55,3700.00,,Unknown,Monitor,,Medium,monitor,999,2025-06-30
