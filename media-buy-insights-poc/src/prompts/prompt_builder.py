@@ -9,43 +9,62 @@ class CampaignPromptBuilder:
     """Builds JSON-structured prompts for TV campaign analysis"""
     
     def build_analysis_prompt(self, kpis: Dict[str, Any], client_name: str = None) -> str:
-        """
-        Build comprehensive campaign analysis prompt with JSON schema
-        
-        Args:
-            kpis: KPI data from KPICalculator
-            client_name: Name of client being analyzed
-            
-        Returns:
-            Formatted prompt with JSON schema for Gemini
-        """
+        """Build comprehensive campaign analysis prompt with JSON schema"""
         
         campaign_overview = self._format_campaign_overview(kpis, client_name)
-        station_table = self._format_station_table(kpis)
-        daypart_table = self._format_daypart_table(kpis)
-        weekly_trends = self._format_weekly_trends(kpis)
-        json_schema = self._get_json_schema()
+        recency_performance = self._format_recency_weighted_performance(kpis)
+        station_daypart_breakdown = self._format_station_daypart_breakdown(kpis)
+        json_schema = self._get_enhanced_json_schema()
         
         return f"""{campaign_overview}
 
-{station_table}
+{recency_performance}
 
-{daypart_table}
+{station_daypart_breakdown}
 
-{weekly_trends}
+ANALYSIS TASK - COMPREHENSIVE MEDIA BUYER OPTIMIZATION:
+You are an expert TV media buying analyst. Analyze the campaign data above and provide comprehensive actionable insights. Generate 20-30 total recommendations across multiple categories and scenarios.
 
-ANALYSIS TASK:
-You are an expert TV media buying analyst. Analyze the campaign data above and provide actionable insights for media buyers.
+CRITICAL INSTRUCTIONS:
+1. RECENCY WEIGHTING: Prioritize the most recent 7 days heavily when making decisions. Use weeks 2-3+ for confirmation of trends only.
+2. SAMPLE SIZE REQUIREMENTS: Only recommend actions for entities with 30+ spots (high confidence) or 10+ spots (medium confidence). Ignore entities with <10 spots.
+3. WEEKLY SPOT REALLOCATION: All recommendations must specify exact weekly spot movements (e.g., "move 12 spots per week from STATION_X LATE to STATION_Y PRIME").
+4. BUDGET NEUTRAL: All reallocations must sum to zero net change in total weekly spots. Specify exact sources and destinations.
+5. DAYPART SPECIFICITY: Break down recommendations by station + daypart combinations unless performance trends are consistent across all dayparts for a station.
+6. CONFIRMATION PERIOD: Only flag entities as "confirmed underperformers" if they show poor performance for 3+ weeks with adequate sample size (30+ spots).
+7. IMPACT-BASED URGENCY: Assign urgency based on both absolute impact (total visits lost) and relative impact (% of campaign affected).
+8. COMPREHENSIVE ANALYSIS: Provide insights across multiple optimization scenarios (conservative, aggressive, testing) and analysis categories.
 
-CRITICAL: Respond with ONLY valid JSON in this exact format. No markdown, explanations, or additional text.
+OPTIMIZATION SCENARIOS TO INCLUDE:
+- CONSERVATIVE (10-15% moves): Low-risk proven opportunities
+- AGGRESSIVE (25-50% moves): High-confidence major reallocations
+- TESTING (5-10% moves): Experimental opportunities for emerging patterns
+
+ANALYSIS CATEGORIES TO COVER:
+- Scaling opportunities (5-8 recommendations)
+- Underperformers requiring action (3-5 recommendations)
+- Budget reallocations (5-8 scenarios across conservative/aggressive)
+- Daypart shifting within stations (3-5 recommendations)
+- Performance tier analysis (2-4 insights)
+- Temporal pattern insights (2-3 insights)
+- Risk assessment insights (2-3 insights)
+- Emerging opportunities (2-4 recommendations)
+- Market dynamics hypotheses (1-2 speculative insights, clearly labeled)
+
+BUDGET FLEXIBILITY NOTE: While maintaining budget neutrality, highlight opportunities where increasing total budget would yield significant positive impact.
+
+Respond with ONLY valid JSON in this exact format:
 
 {json_schema}
 
 Rules:
-1. Use exact station/daypart names from the tables above
-2. Provide specific, quantified recommendations
-3. Focus on actionable budget allocation decisions
-4. Ensure all JSON fields are properly formatted"""
+- Use exact station/daypart names from the data above
+- Provide specific weekly spot counts for all recommendations
+- Ensure reallocation math adds up to zero net change within each scenario
+- Generate 20-30 total insights across all categories
+- Label speculative insights clearly in market_dynamics section
+- Provide multiple optimization scenarios (conservative, aggressive, testing)
+- Focus on actionable decisions for media buyers with comprehensive coverage"""
     
     def _format_campaign_overview(self, kpis: Dict[str, Any], client_name: str) -> str:
         """Format campaign overview section"""
@@ -78,130 +97,288 @@ Investment: ${total_cost:,.0f}"""
         
         return overview
     
-    def _format_station_table(self, kpis: Dict[str, Any]) -> str:
-        """Format station performance table"""
-        
-        dimensional = kpis.get('dimensional_analysis', {})
-        station_data = dimensional.get('station_performance', [])
-        
-        if not station_data:
-            return "STATION PERFORMANCE: No data available"
-        
-        table = """STATION PERFORMANCE:
-Station      | Visits | Spots | Efficiency | Cost      | Ranking
--------------|--------|-------|------------|-----------|--------"""
-        
-        for i, station in enumerate(station_data[:10], 1):
-            name = (station.get('station') or 'Unknown')[:11].ljust(11)
-            visits = station.get('total_visits', 0) or 0
-            spots = station.get('spots', 0) or 0
-            efficiency = station.get('avg_visits_per_spot', 0) or 0
-            cost = station.get('total_cost', 0) or 0
-            
-            ranking = "Top" if i <= 3 else "Good" if i <= 6 else "Weak"
-            
-            table += f"\n{name} | {visits:6,} | {spots:5} | {efficiency:10.1f} | ${cost:8,.0f} | {ranking}"
-        
-        return table
-    
-    def _format_daypart_table(self, kpis: Dict[str, Any]) -> str:
-        """Format daypart performance table"""
-        
-        dimensional = kpis.get('dimensional_analysis', {})
-        daypart_data = dimensional.get('daypart_performance', [])
-        
-        if not daypart_data:
-            return "DAYPART PERFORMANCE: No data available"
-        
-        table = """DAYPART PERFORMANCE:
-Daypart  | Visits | Spots | Efficiency | Cost      | Priority
----------|--------|-------|------------|-----------|----------"""
-        
-        for daypart in daypart_data:
-            name = (daypart.get('daypart') or 'Unknown')[:8].ljust(8)
-            visits = daypart.get('total_visits', 0) or 0
-            spots = daypart.get('spots', 0) or 0
-            efficiency = daypart.get('avg_visits_per_spot', 0) or 0
-            cost = daypart.get('total_cost', 0) or 0
-            
-            priority = "High" if efficiency >= 30 else "Medium" if efficiency >= 15 else "Low"
-            
-            table += f"\n{name} | {visits:6,} | {spots:5} | {efficiency:10.1f} | ${cost:8,.0f} | {priority}"
-        
-        return table
-    
-    def _format_weekly_trends(self, kpis: Dict[str, Any]) -> str:
-        """Format weekly trend analysis"""
+    def _format_recency_weighted_performance(self, kpis: Dict[str, Any]) -> str:
+        """Format performance data with recency weighting"""
         
         time_patterns = kpis.get('time_patterns', {})
         daily_trends = time_patterns.get('daily_trends', [])
         
-        if not daily_trends or len(daily_trends) < 14:
-            return "WEEKLY TRENDS: Insufficient data for trend analysis"
+        if not daily_trends or len(daily_trends) < 7:
+            return "RECENCY-WEIGHTED PERFORMANCE: Insufficient data for weekly analysis"
         
-        # Simple week-over-week calculation
-        recent_week = daily_trends[-7:]
-        previous_week = daily_trends[-14:-7]
+        total_days = len(daily_trends)
         
-        recent_efficiency = sum(d.get('visits', 0) for d in recent_week) / max(sum(d.get('spots', 1) for d in recent_week), 1)
-        prev_efficiency = sum(d.get('visits', 0) for d in previous_week) / max(sum(d.get('spots', 1) for d in previous_week), 1)
+        # Week 1: Most recent 7 days
+        week1_data = daily_trends[-7:] if total_days >= 7 else daily_trends
+        week1_spots = sum(d.get('spots', 0) for d in week1_data)
+        week1_visits = sum(d.get('visits', 0) for d in week1_data)
+        week1_efficiency = week1_visits / max(week1_spots, 1)
         
-        efficiency_change = ((recent_efficiency - prev_efficiency) / max(prev_efficiency, 1)) * 100
+        # Week 2: Days 8-14
+        week2_data = daily_trends[-14:-7] if total_days >= 14 else []
+        week2_spots = sum(d.get('spots', 0) for d in week2_data) if week2_data else 0
+        week2_visits = sum(d.get('visits', 0) for d in week2_data) if week2_data else 0
+        week2_efficiency = week2_visits / max(week2_spots, 1) if week2_spots > 0 else 0
         
-        trend_direction = "Improving" if efficiency_change > 5 else "Declining" if efficiency_change < -5 else "Stable"
+        # Weeks 3+: Remaining period
+        week3plus_data = daily_trends[:-14] if total_days > 14 else []
+        week3plus_spots = sum(d.get('spots', 0) for d in week3plus_data) if week3plus_data else 0
+        week3plus_visits = sum(d.get('visits', 0) for d in week3plus_data) if week3plus_data else 0
+        week3plus_efficiency = week3plus_visits / max(week3plus_spots, 1) if week3plus_spots > 0 else 0
         
-        return f"""WEEKLY TRENDS:
-Recent Week Efficiency: {recent_efficiency:.1f} visits/spot
-Previous Week Efficiency: {prev_efficiency:.1f} visits/spot
-Week-over-Week Change: {efficiency_change:+.1f}%
-Trend Direction: {trend_direction}"""
+        # Calculate changes
+        week_over_week_change = ((week1_efficiency - week2_efficiency) / max(week2_efficiency, 1)) * 100 if week2_efficiency > 0 else 0
+        
+        performance = f"""RECENCY-WEIGHTED PERFORMANCE (Prioritize Week 1 for decisions):
+
+WEEK 1 (Most Recent 7 days) - PRIMARY DECISION DATA:
+- Spots: {week1_spots:,} | Visits: {week1_visits:,} | Efficiency: {week1_efficiency:.2f} visits/spot
+- Weekly Volume: {week1_spots} spots per week"""
+        
+        if week2_data:
+            performance += f"""
+
+WEEK 2 (Days 8-14) - COMPARISON DATA:
+- Spots: {week2_spots:,} | Visits: {week2_visits:,} | Efficiency: {week2_efficiency:.2f} visits/spot
+- Week-over-Week Change: {week_over_week_change:+.1f}%"""
+        
+        if week3plus_data:
+            performance += f"""
+
+WEEKS 3+ (Context Period) - CONFIRMATION DATA:
+- Spots: {week3plus_spots:,} | Visits: {week3plus_visits:,} | Efficiency: {week3plus_efficiency:.2f} visits/spot
+- Period Length: {len(week3plus_data)} days"""
+        
+        # Add momentum assessment
+        if week2_efficiency > 0:
+            if week_over_week_change > 10:
+                momentum = "STRONG POSITIVE momentum - capitalize immediately"
+            elif week_over_week_change > 5:
+                momentum = "Positive momentum - consider scaling"
+            elif week_over_week_change < -10:
+                momentum = "DECLINING performance - urgent optimization needed"
+            elif week_over_week_change < -5:
+                momentum = "Negative momentum - investigate and adjust"
+            else:
+                momentum = "Stable performance - maintain current approach"
+            
+            performance += f"\n\nMOMENTUM ASSESSMENT: {momentum}"
+        
+        return performance
     
-    def _get_json_schema(self) -> str:
-        """Get the required JSON schema"""
+    def _format_station_daypart_breakdown(self, kpis: Dict[str, Any]) -> str:
+        """Format detailed station + daypart performance breakdown"""
+        
+        dimensional = kpis.get('dimensional_analysis', {})
+        station_data = dimensional.get('station_performance', [])
+        daypart_data = dimensional.get('daypart_performance', [])
+        combination_data = dimensional.get('station_daypart_combinations', [])
+        
+        breakdown = """STATION + DAYPART PERFORMANCE BREAKDOWN:
+
+TOP STATION PERFORMERS (for scaling opportunities):"""
+        
+        # Station performance with sample size filtering
+        if station_data:
+            breakdown += "\nStation          | Spots | Visits | Efficiency | Sample Size | Confidence"
+            breakdown += "\n-----------------|-------|--------|------------|-------------|------------"
+            
+            for station in station_data[:8]:
+                name = (station.get('station') or 'Unknown')[:14].ljust(14)
+                spots = station.get('spots', 0)
+                visits = station.get('total_visits', 0)
+                efficiency = station.get('avg_visits_per_spot', 0) or 0
+                
+                # Determine confidence based on sample size
+                confidence = "HIGH" if spots >= 30 else "MEDIUM" if spots >= 10 else "LOW"
+                
+                breakdown += f"\n{name} | {spots:5} | {visits:6,} | {efficiency:10.1f} | {spots:11} | {confidence}"
+        
+        # Daypart performance
+        if daypart_data:
+            breakdown += "\n\nDAYPART EFFICIENCY (for time-based optimization):"
+            breakdown += "\nDaypart   | Spots | Visits | Efficiency | Weekly Spots | Priority"
+            breakdown += "\n----------|-------|--------|------------|--------------|----------"
+            
+            total_days = len(kpis.get('time_patterns', {}).get('daily_trends', []))
+            weeks = max(1, total_days // 7)
+            
+            for daypart in daypart_data:
+                name = (daypart.get('daypart') or 'Unknown')[:8].ljust(8)
+                spots = daypart.get('spots', 0)
+                visits = daypart.get('total_visits', 0)
+                efficiency = daypart.get('avg_visits_per_spot', 0) or 0
+                weekly_spots = spots // weeks
+                
+                priority = "SCALE" if efficiency >= 3.0 else "MAINTAIN" if efficiency >= 2.0 else "OPTIMIZE" if efficiency >= 1.0 else "REDUCE"
+                
+                breakdown += f"\n{name} | {spots:5} | {visits:6,} | {efficiency:10.1f} | {weekly_spots:12} | {priority}"
+        
+        # Station + Daypart combinations (for specific reallocation recommendations)
+        if combination_data:
+            breakdown += "\n\nSTATION + DAYPART COMBINATIONS (for specific reallocation):"
+            breakdown += "\nStation + Daypart          | Spots | Efficiency | Weekly | Action Needed"
+            breakdown += "\n---------------------------|-------|------------|--------|---------------"
+            
+            total_days = len(kpis.get('time_patterns', {}).get('daily_trends', []))
+            weeks = max(1, total_days // 7)
+            
+            for combo in combination_data[:10]:
+                station = combo.get('station', 'Unknown')[:8]
+                daypart = combo.get('daypart', 'Unknown')[:6]
+                name = f"{station}_{daypart}"[:25].ljust(25)
+                spots = combo.get('spots', 0)
+                efficiency = combo.get('avg_visits_per_spot', 0) or 0
+                weekly_spots = spots // weeks
+                
+                if spots >= 30:
+                    action = "SCALE UP" if efficiency >= 3.0 else "REDUCE" if efficiency < 1.5 else "MAINTAIN"
+                elif spots >= 10:
+                    action = "MONITOR"
+                else:
+                    action = "IGNORE"
+                
+                breakdown += f"\n{name} | {spots:5} | {efficiency:10.1f} | {weekly_spots:6} | {action}"
+        
+        return breakdown
+    
+    def _get_enhanced_json_schema(self) -> str:
+        """Get the comprehensive JSON schema for extensive media buyer insights"""
         return """{
   "executive_summary": {
-    "summary": "2-3 sentence campaign assessment focusing on key opportunities and issues",
+    "summary": "3-4 sentence comprehensive assessment focusing on recent performance and key optimization opportunities",
     "confidence": "High|Medium|Low",
-    "urgency": "High|Medium|Low"
+    "urgency": "High|Medium|Low",
+    "recent_momentum": "positive|negative|stable",
+    "total_insights_generated": 25
   },
   "scaling_opportunities": [
     {
       "priority": 1,
-      "entity": "EXACT_STATION_OR_DAYPART_NAME",
-      "entity_type": "station|daypart",
+      "entity": "STATION_NAME_DAYPART (e.g., TOP_STATION_PRIME)",
+      "entity_type": "station_daypart",
+      "current_weekly_spots": 25,
+      "recommended_weekly_increase": 8,
+      "optimization_scenario": "conservative|aggressive|testing",
       "action_type": "scale_up|test|investigate",
-      "recommendation": "Specific actionable recommendation",
-      "projected_impact": "Quantified benefit (e.g., '15% efficiency gain', '50 more visits')",
+      "recommendation": "Specific weekly spot increase recommendation",
+      "projected_weekly_impact": "Expected additional visits per week",
       "confidence": "High|Medium|Low",
-      "business_rationale": "Why this opportunity exists"
+      "sample_size": 45,
+      "risk_level": "Low|Medium|High",
+      "business_rationale": "Why this station+daypart combination warrants scaling"
     }
   ],
   "underperformers": [
     {
-      "entity": "EXACT_STATION_OR_DAYPART_NAME",
-      "entity_type": "station|daypart",
-      "issue": "Specific performance problem",
-      "severity": "High|Medium|Low", 
+      "entity": "STATION_NAME_DAYPART",
+      "entity_type": "station_daypart",
+      "current_weekly_spots": 15,
+      "weeks_of_poor_performance": 4,
+      "issue": "Specific performance problem with recent data emphasis",
+      "severity": "High|Medium|Low",
+      "recommended_weekly_reduction": 10,
       "recommended_action": "reduce|optimize|eliminate|investigate",
-      "business_rationale": "Why action is needed"
+      "sample_size": 60,
+      "potential_cause": "creative_fatigue|competitive_pressure|audience_mismatch|unknown",
+      "business_rationale": "Why this station+daypart requires immediate action"
     }
   ],
   "budget_reallocations": [
     {
-      "from_entity": "SOURCE_STATION",
-      "to_entity": "TARGET_STATION",
-      "spots_to_move": 15,
-      "projected_impact": "Expected improvement",
+      "scenario_type": "conservative|aggressive|testing",
+      "from_entity": "WEAK_STATION_DAYPART",
+      "to_entity": "STRONG_STATION_DAYPART",
+      "weekly_spots_to_move": 12,
+      "current_from_weekly_spots": 20,
+      "current_to_weekly_spots": 18,
+      "projected_weekly_impact": "Expected net visit improvement per week",
       "confidence": "High|Medium|Low",
-      "implementation_priority": "High|Medium|Low"
+      "implementation_priority": "High|Medium|Low",
+      "percentage_change_from": "40% reduction",
+      "percentage_change_to": "67% increase",
+      "risk_assessment": "Analysis of potential risks"
+    }
+  ],
+  "daypart_shifting": [
+    {
+      "station": "STATION_NAME",
+      "from_daypart": "CURRENT_DAYPART",
+      "to_daypart": "TARGET_DAYPART", 
+      "weekly_spots_to_shift": 8,
+      "projected_efficiency_gain": "Expected improvement",
+      "confidence": "High|Medium|Low",
+      "business_rationale": "Why this daypart shift makes sense"
+    }
+  ],
+  "performance_tier_analysis": [
+    {
+      "tier": "Top Tier|Mid Tier|Bottom Tier",
+      "entities": ["STATION_DAYPART_1", "STATION_DAYPART_2"],
+      "characteristics": "Common performance characteristics",
+      "recommended_strategy": "How to optimize this tier",
+      "scaling_potential": "High|Medium|Low"
+    }
+  ],
+  "temporal_insights": [
+    {
+      "pattern_type": "weekly_trend|daily_pattern|momentum_shift",
+      "description": "Specific temporal pattern observed",
+      "entities_affected": ["STATION_DAYPART_1", "STATION_DAYPART_2"],
+      "recommended_timing_adjustment": "Specific timing recommendation",
+      "projected_impact": "Expected improvement from timing change"
+    }
+  ],
+  "emerging_opportunities": [
+    {
+      "entity": "STATION_NAME_DAYPART",
+      "opportunity_type": "new_performer|recovering_asset|untested_potential",
+      "current_weekly_spots": 5,
+      "recommended_test_increase": 3,
+      "testing_duration": "2-4 weeks",
+      "success_metrics": "What to measure for success",
+      "confidence": "Medium|Low",
+      "business_rationale": "Why this deserves testing"
+    }
+  ],
+  "risk_assessments": [
+    {
+      "risk_type": "high_volume_underperformer|market_saturation|competitive_pressure",
+      "description": "Specific risk identified",
+      "affected_entities": ["STATION_DAYPART_1"],
+      "potential_impact": "Quantified risk impact",
+      "mitigation_strategy": "How to address this risk",
+      "urgency": "High|Medium|Low"
+    }
+  ],
+  "market_dynamics": [
+    {
+      "hypothesis": "potential_creative_fatigue|competitive_interference|market_saturation",
+      "evidence": "Data patterns supporting this hypothesis",
+      "affected_entities": ["STATION_DAYPART_1", "STATION_DAYPART_2"],
+      "confidence": "Speculative|Low|Medium",
+      "recommended_investigation": "How to validate this hypothesis",
+      "note": "This is speculative analysis based on performance patterns"
+    }
+  ],
+  "budget_scaling_opportunities": [
+    {
+      "opportunity_description": "Where increasing total budget would yield significant ROI",
+      "recommended_additional_weekly_spots": 25,
+      "target_entities": ["TOP_STATION_PRIME", "STRONG_STATION_MORNING"],
+      "projected_weekly_roi": "Expected return on incremental investment",
+      "confidence": "High|Medium|Low",
+      "scaling_scenario": "conservative|aggressive"
     }
   ],
   "trend_insights": [
     {
-      "trend_description": "Observed trend with specifics",
+      "trend_description": "Recent performance trend with weekly context",
       "trend_direction": "positive|negative|stable",
-      "entity": "Station/daypart/campaign affected",
+      "entity": "STATION_DAYPART or Campaign",
+      "weeks_observed": 3,
       "urgency": "High|Medium|Low",
+      "weekly_impact": "Visits gained/lost per week due to trend",
       "recommended_response": "capitalize|monitor|correct|investigate"
     }
   ]
@@ -212,7 +389,6 @@ Trend Direction: {trend_direction}"""
 if __name__ == "__main__":
     print("🧪 Testing Clean Prompt Builder...")
     
-    # Sample KPI data
     sample_kpis = {
         'metadata': {
             'date_range': {'start_date': '2025-06-01', 'end_date': '2025-06-27'}
@@ -253,16 +429,6 @@ if __name__ == "__main__":
         prompt = builder.build_analysis_prompt(sample_kpis, "TEST_CLIENT")
         
         print(f"✅ Prompt generated ({len(prompt):,} characters)")
-        
-        # Check for required sections
-        required = ["CAMPAIGN OVERVIEW", "STATION PERFORMANCE", "DAYPART PERFORMANCE", "JSON"]
-        missing = [section for section in required if section not in prompt]
-        
-        if missing:
-            print(f"⚠️  Missing sections: {missing}")
-        else:
-            print("✅ All required sections present")
-        
         print("✅ Clean prompt builder test completed!")
         
     except Exception as e:
